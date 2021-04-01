@@ -1,6 +1,7 @@
 package org.osmdroid.mtp;
 
 import org.junit.Assert;
+import org.junit.Ignore;
 import org.junit.Test;
 
 import java.io.File;
@@ -11,18 +12,21 @@ import java.io.File;
 
 public class TilePackagerTest {
 
+    @Ignore
     @Test
-    public void runBasicTest(){
+    public void runBasicTest() {
         runTest("fr_mapnick_12.zip");
     }
 
+    @Ignore
     @Test
-    public void runBasicTestSql(){
+    public void runBasicTestSql() {
         runTest("fr_mapnick_12.sql");
     }
 
+    @Ignore
     @Test
-    public void runBasicTestGemf(){
+    public void runBasicTestGemf() {
         runTest("fr_mapnick_12.gemf");
 
     }
@@ -31,7 +35,7 @@ public class TilePackagerTest {
         OSMMapTilePackager.main(new String[]{
 
                 "-force",
-                "-u", "http://b.tile.openstreetmap.org/%d/%d/%d.png",
+                "-u", "https://b.tile.openstreetmap.org/%d/%d/%d.png",
                 "-t", "Mapnik",
                 "-d", outputFile,
                 "-zmax", "2",
@@ -46,7 +50,7 @@ public class TilePackagerTest {
             e.printStackTrace();
         }
         Assert.assertTrue(new File(outputFile).exists());
-        Assert.assertTrue(new File(outputFile).length()>0);
+        Assert.assertTrue(new File(outputFile).length() > 0);
 
         new File(outputFile).delete();
 

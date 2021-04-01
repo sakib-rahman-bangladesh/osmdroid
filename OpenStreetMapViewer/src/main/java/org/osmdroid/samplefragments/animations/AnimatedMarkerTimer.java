@@ -2,7 +2,6 @@ package org.osmdroid.samplefragments.animations;
 
 import android.app.Activity;
 import android.graphics.Color;
-import android.os.Handler;
 import android.util.Log;
 
 import org.osmdroid.events.MapListener;
@@ -12,8 +11,7 @@ import org.osmdroid.samplefragments.BaseSampleFragment;
 import org.osmdroid.util.GeoPoint;
 import org.osmdroid.views.overlay.FolderOverlay;
 import org.osmdroid.views.overlay.Marker;
-import org.osmdroid.views.overlay.Overlay;
-import org.osmdroid.views.overlay.gridlines.LatLonGridlineOverlay;
+import org.osmdroid.views.overlay.gridlines.LatLonGridlineOverlay2;
 
 import java.util.Timer;
 import java.util.TimerTask;
@@ -34,7 +32,8 @@ public class AnimatedMarkerTimer extends BaseSampleFragment implements MapListen
     Marker marker;
     Timer t;
     TimerTask task;
-    boolean added=false;
+    boolean added = false;
+
     @Override
     public String getSampleTitle() {
         return "Animated Marker";
@@ -43,7 +42,6 @@ public class AnimatedMarkerTimer extends BaseSampleFragment implements MapListen
     @Override
     protected void addOverlays() {
         super.addOverlays();
-        LatLonGridlineOverlay.setDefaults();
         mMapView.getController().setCenter(new GeoPoint(0d, 0d));
         mMapView.getController().setZoom(5);
         mMapView.setTilesScaledToDpi(true);
@@ -53,42 +51,28 @@ public class AnimatedMarkerTimer extends BaseSampleFragment implements MapListen
         marker = new Marker(mMapView);
         marker.setPosition(new GeoPoint(45d, -74d));
 
-        updateGridlines();
+        LatLonGridlineOverlay2 grids = new LatLonGridlineOverlay2();
+
+        grids.setBackgroundColor(Color.BLACK);
+        grids.setFontColor(Color.GREEN);
+        grids.setLineColor(Color.GREEN);
+        mMapView.getOverlayManager().add(grids);
 
     }
 
 
-
     @Override
     public boolean onScroll(ScrollEvent scrollEvent) {
-        updateGridlines();
         return false;
     }
 
     @Override
     public boolean onZoom(ZoomEvent zoomEvent) {
-        updateGridlines();
         return false;
     }
 
 
-    protected void updateGridlines() {
-
-        if (mMapView == null)
-            return; //happens during unit tests with rapid recycling of the fragment
-        if (activeLatLonGrid != null) {
-            mMapView.getOverlayManager().remove(activeLatLonGrid);
-            activeLatLonGrid.onDetach(mMapView);
-        }
-        LatLonGridlineOverlay.backgroundColor = Color.BLACK;
-        LatLonGridlineOverlay.fontColor = Color.GREEN;
-        LatLonGridlineOverlay.lineColor = Color.GREEN;
-        activeLatLonGrid = LatLonGridlineOverlay.getLatLonGrid(getActivity(), mMapView);
-        mMapView.getOverlays().add(activeLatLonGrid);
-
-    }
-
-    public void onResume(){
+    public void onResume() {
         super.onResume();
         startTask();
     }
@@ -99,9 +83,9 @@ public class AnimatedMarkerTimer extends BaseSampleFragment implements MapListen
             @Override
             public void run() {
                 GeoPoint current = marker.getPosition();
-                if (current==null)
+                if (current == null)
                     current = new GeoPoint(45d, -74d);
-                final GeoPoint location = new GeoPoint(current.getLatitude(), current.getLongitude()+0.0003);
+                final GeoPoint location = new GeoPoint(current.getLatitude(), current.getLongitude() + 0.0003);
                 if (location != null) {
                     Activity activity = getActivity();
                     if (activity != null) try {
@@ -110,18 +94,18 @@ public class AnimatedMarkerTimer extends BaseSampleFragment implements MapListen
                             public void run() {
                                 try {
 
-                                        marker.setPosition(location);
-                                        mMapView.getController().setCenter(location);
+                                    marker.setPosition(location);
+                                    mMapView.getController().setCenter(location);
 
-                                        if (marker.isInfoWindowShown()) {
-                                            marker.closeInfoWindow();
-                                            marker.showInfoWindow();
-                                        }
-                                        if (!added) {
-                                            //only add it once
-                                            mMapView.getOverlayManager().add(marker);
-                                            added = true;
-                                        }
+                                    if (marker.isInfoWindowShown()) {
+                                        marker.closeInfoWindow();
+                                        marker.showInfoWindow();
+                                    }
+                                    if (!added) {
+                                        //only add it once
+                                        mMapView.getOverlayManager().add(marker);
+                                        added = true;
+                                    }
 
 
                                 } catch (Exception ex) {
@@ -138,6 +122,7 @@ public class AnimatedMarkerTimer extends BaseSampleFragment implements MapListen
         t = new Timer();
         t.schedule(task, 1000, 1000);
     }
+
     @Override
     public void onPause() {
         super.onPause();
@@ -145,10 +130,6 @@ public class AnimatedMarkerTimer extends BaseSampleFragment implements MapListen
         if (t != null)
             t.cancel();
         t = null;
-    }
-
-    public boolean skipOnCiTests() {
-        return true;
     }
 
     @Override

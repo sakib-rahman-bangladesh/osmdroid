@@ -15,7 +15,6 @@ import org.osmdroid.events.ScrollEvent;
 import org.osmdroid.events.ZoomEvent;
 import org.osmdroid.samplefragments.BaseSampleFragment;
 import org.osmdroid.util.GeoPoint;
-import org.osmdroid.views.MapView;
 
 import static org.osmdroid.samplefragments.events.SampleMapEventListener.df;
 
@@ -29,23 +28,25 @@ public class Bug164EndlessOnScolls extends BaseSampleFragment implements View.On
     public String getSampleTitle() {
         return "Bug #164 Endless onScroll callsScoll";
     }
+
     TextView textViewCurrentLocation;
     Button animateTo;
 
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
-        View root = inflater.inflate(R.layout.map_with_locationbox164, container,false);
-        mMapView = (MapView) root.findViewById(R.id.mapview);
-        textViewCurrentLocation = (TextView) root.findViewById(R.id.textViewCurrentLocation);
-        animateTo = (Button)root.findViewById(R.id.animateTo);
+        View root = inflater.inflate(R.layout.map_with_locationbox164, container, false);
+        mMapView = root.findViewById(R.id.mapview);
+        textViewCurrentLocation = root.findViewById(R.id.textViewCurrentLocation);
+        animateTo = root.findViewById(R.id.animateTo);
         animateTo.setOnClickListener(this);
         Log.d(TAG, "onCreateView");
         return root;
     }
 
 
-    int callsScoll =0;
-    int callsZoom=0;
+    int callsScoll = 0;
+    int callsZoom = 0;
+
     protected void addOverlays() {
         super.addOverlays();
         //
@@ -68,21 +69,22 @@ public class Bug164EndlessOnScolls extends BaseSampleFragment implements View.On
         });
     }
 
-    private void updateInfo(){
+    private void updateInfo() {
         IGeoPoint mapCenter = mMapView.getMapCenter();
-        textViewCurrentLocation.setText(df.format(mapCenter.getLatitude())+","+
+        textViewCurrentLocation.setText(df.format(mapCenter.getLatitude()) + "," +
                 df.format(mapCenter.getLongitude())
-                +","+mMapView.getZoomLevel() +"\nonScroll: " + callsScoll + " onZoom: " + callsZoom);
+                + "," + mMapView.getZoomLevelDouble() + "\nonScroll: " + callsScoll + " onZoom: "
+                + callsZoom);
 
     }
 
     @Override
     public void onClick(View v) {
-        if (v.getId() == R.id.animateTo){
+        if (v.getId() == R.id.animateTo) {
 
-            double lat = Math.random()*180d - 90;
-            double lon =Math.random()*360 - 180;
-            mMapView.getController().animateTo(new GeoPoint(lat,lon));
+            double lat = Math.random() * 180d - 90;
+            double lon = Math.random() * 360 - 180;
+            mMapView.getController().animateTo(new GeoPoint(lat, lon));
         }
     }
 }

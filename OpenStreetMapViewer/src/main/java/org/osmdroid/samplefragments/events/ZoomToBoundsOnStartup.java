@@ -15,10 +15,7 @@ import org.osmdroid.events.MapListener;
 import org.osmdroid.events.ScrollEvent;
 import org.osmdroid.events.ZoomEvent;
 import org.osmdroid.samplefragments.BaseSampleFragment;
-import org.osmdroid.tileprovider.MapTile;
-import org.osmdroid.tileprovider.tilesource.OnlineTileSourceBase;
 import org.osmdroid.util.BoundingBox;
-import org.osmdroid.util.BoundingBoxE6;
 import org.osmdroid.views.MapView;
 
 import static org.osmdroid.samplefragments.events.SampleMapEventListener.df;
@@ -39,13 +36,13 @@ public class ZoomToBoundsOnStartup extends BaseSampleFragment implements View.On
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
 
-        View root = inflater.inflate(R.layout.map_with_locationbox164, container,false);
+        View root = inflater.inflate(R.layout.map_with_locationbox164, container, false);
 
-        mMapView = (MapView) root.findViewById(R.id.mapview);
+        mMapView = root.findViewById(R.id.mapview);
         mMapView.getController().setZoom(7);
-        animateTo= (Button) root.findViewById(R.id.animateTo);
+        animateTo = root.findViewById(R.id.animateTo);
         animateTo.setOnClickListener(this);
-        textViewCurrentLocation = (TextView) root.findViewById(R.id.textViewCurrentLocation);
+        textViewCurrentLocation = root.findViewById(R.id.textViewCurrentLocation);
         attach();
         return root;
 /*
@@ -91,7 +88,7 @@ on a button click
 
     }
 
-    private void attach(){
+    private void attach() {
         mMapView.addOnFirstLayoutListener(new MapView.OnFirstLayoutListener() {
 
             @Override
@@ -107,7 +104,7 @@ on a button click
         mMapView.setMapListener(new MapListener() {
             @Override
             public boolean onScroll(ScrollEvent event) {
-                Log.i(IMapView.LOGTAG, System.currentTimeMillis() + " onScroll " + event.getX() + "," +event.getY() );
+                Log.i(IMapView.LOGTAG, System.currentTimeMillis() + " onScroll " + event.getX() + "," + event.getY());
                 updateInfo();
                 return true;
             }
@@ -121,17 +118,17 @@ on a button click
         });
     }
 
-    private void updateInfo(){
+    private void updateInfo() {
         IGeoPoint mapCenter = mMapView.getMapCenter();
-        textViewCurrentLocation.setText(df.format(mapCenter.getLatitude())+","+
-            df.format(mapCenter.getLongitude())
-            +","+mMapView.getZoomLevel());
+        textViewCurrentLocation.setText(df.format(mapCenter.getLatitude()) + "," +
+                df.format(mapCenter.getLongitude())
+                + "," + mMapView.getZoomLevelDouble());
 
     }
 
     @Override
     public void onClick(View v) {
-        final BoundingBox boundingBox = new BoundingBox(41.906802,12.445436,41.900073,12.457852 );
+        final BoundingBox boundingBox = new BoundingBox(41.906802, 12.445436, 41.900073, 12.457852);
         mMapView.zoomToBoundingBox(boundingBox, false);
         mMapView.zoomToBoundingBox(boundingBox, false);
         mMapView.invalidate();

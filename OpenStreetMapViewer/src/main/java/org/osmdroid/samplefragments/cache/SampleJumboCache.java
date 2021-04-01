@@ -6,76 +6,57 @@
 package org.osmdroid.samplefragments.cache;
 
 import android.os.Bundle;
-import android.widget.Toast;
 
 import org.osmdroid.config.Configuration;
 import org.osmdroid.samplefragments.BaseSampleFragment;
-import org.osmdroid.tileprovider.constants.OpenStreetMapTileProviderConstants;
-import org.osmdroid.views.overlay.Overlay;
-import org.osmdroid.views.overlay.TilesOverlay;
-
-import java.util.Iterator;
 
 /**
  * An example on increasing the in memory tile cache. This is NOT the disk cache!
- *
+ * <p>
  * Caution, setting these values too high may cause OOM errors on less capable devices!
+ *
  * @author alex
  */
-public class SampleJumboCache  extends BaseSampleFragment {
+public class SampleJumboCache extends BaseSampleFragment {
 
-	// ===========================================================
-	// Constants
-	// ===========================================================
+    public SampleJumboCache() {
+        Configuration.getInstance().setCacheMapTileCount((short) 12);
+        Configuration.getInstance().setCacheMapTileOvershoot((short) 12);
+    }
+    // ===========================================================
+    // Constants
+    // ===========================================================
 
-	public static final String TITLE = "Jumbo Memory Cache";
+    public static final String TITLE = "Jumbo Memory Cache";
 
-	@Override
-	public String getSampleTitle() {
-		return TITLE;
-	}
+    @Override
+    public String getSampleTitle() {
+        return TITLE;
+    }
 
-	// ===========================================================
-	// Constructors
-	// ===========================================================
-	/** Called when the activity is first created. */
-	@Override
-	public void onActivityCreated(Bundle savedInstanceState) {
-		super.onActivityCreated(savedInstanceState);
-	}
+    // ===========================================================
+    // Constructors
+    // ===========================================================
 
-	@Override
-	protected void addOverlays() {
-		super.addOverlays();
+    /**
+     * Called when the activity is first created.
+     */
+    @Override
+    public void onActivityCreated(Bundle savedInstanceState) {
+        super.onActivityCreated(savedInstanceState);
+    }
 
-		Iterator<Overlay> iterator = mMapView.getOverlays().iterator();
-		while(iterator.hasNext()){
-			Overlay next = iterator.next();
-			if (next instanceof TilesOverlay){
-				TilesOverlay x = (TilesOverlay)next;
-				x.setOvershootTileCache(x.getOvershootTileCache() * 2);
-				Toast.makeText(getActivity(), "Tiles overlay cache set to " + x.getOvershootTileCache(), Toast.LENGTH_LONG).show();
-				break;
-			}
-		}
-		//this will set the disk cache size in MB to 1GB , 900MB trim size
-		//Configuration.getInstance().setTileFileSystemCacheTrimBytes(900L * 1024 * 1024);
-		//Configuration.getInstance().setTileFileSystemCacheMaxBytes(1000L * 1024 * 1024);
-	}
+    @Override
+    protected void addOverlays() {
+        super.addOverlays();
 
-	@Override
-	public void onPause(){
-		super.onPause();
-		//OpenStreetMapTileProviderConstants.setCacheSizes(500L, 600L);
-		Iterator<Overlay> iterator = mMapView.getOverlays().iterator();
-		while(iterator.hasNext()){
-			Overlay next = iterator.next();
-			if (next instanceof TilesOverlay){
-				TilesOverlay x = (TilesOverlay)next;
-				x.setOvershootTileCache(x.getOvershootTileCache() / 2);
-				Toast.makeText(getActivity(), "Tiles overlay cache set to " + x.getOvershootTileCache(), Toast.LENGTH_LONG).show();
-				break;
-			}
-		}
-	}
+    }
+
+    @Override
+    public void onPause() {
+        super.onPause();
+        //reset the defaults
+        Configuration.getInstance().setCacheMapTileCount((short) 9);
+        Configuration.getInstance().setCacheMapTileOvershoot((short) 0);
+    }
 }

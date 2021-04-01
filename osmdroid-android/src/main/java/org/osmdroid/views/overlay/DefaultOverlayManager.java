@@ -1,15 +1,5 @@
 package org.osmdroid.views.overlay;
 
-import java.util.AbstractList;
-import java.util.Iterator;
-import java.util.List;
-import java.util.ListIterator;
-import java.util.concurrent.CopyOnWriteArrayList;
-
-import org.osmdroid.api.IMapView;
-import org.osmdroid.views.MapView;
-import org.osmdroid.views.overlay.Overlay.Snappable;
-
 import android.graphics.Canvas;
 import android.graphics.Point;
 import android.util.Log;
@@ -18,10 +8,22 @@ import android.view.Menu;
 import android.view.MenuItem;
 import android.view.MotionEvent;
 
+import org.osmdroid.api.IMapView;
+import org.osmdroid.views.MapView;
+import org.osmdroid.views.Projection;
+import org.osmdroid.views.overlay.Overlay.Snappable;
+
+import java.util.AbstractList;
+import java.util.Iterator;
+import java.util.List;
+import java.util.ListIterator;
+import java.util.concurrent.CopyOnWriteArrayList;
+
 /**
  * https://github.com/osmdroid/osmdroid/issues/154
- * @since 5.0.0
+ *
  * @author dozd
+ * @since 5.0.0
  */
 public class DefaultOverlayManager extends AbstractList<Overlay> implements OverlayManager {
 
@@ -31,7 +33,7 @@ public class DefaultOverlayManager extends AbstractList<Overlay> implements Over
 
     public DefaultOverlayManager(final TilesOverlay tilesOverlay) {
         setTilesOverlay(tilesOverlay);
-        mOverlayList = new CopyOnWriteArrayList<Overlay>();
+        mOverlayList = new CopyOnWriteArrayList<>();
     }
 
     @Override
@@ -46,10 +48,10 @@ public class DefaultOverlayManager extends AbstractList<Overlay> implements Over
 
     @Override
     public void add(final int pIndex, final Overlay pElement) {
-        if (pElement==null){
+        if (pElement == null) {
             //#396 fix, null check
             Exception ex = new Exception();
-            Log.e(IMapView.LOGTAG, "Attempt to add a null overlay to the collection. This is probably a bug and should be reported!",ex);
+            Log.e(IMapView.LOGTAG, "Attempt to add a null overlay to the collection. This is probably a bug and should be reported!", ex);
         } else {
             mOverlayList.add(pIndex, pElement);
         }
@@ -63,9 +65,9 @@ public class DefaultOverlayManager extends AbstractList<Overlay> implements Over
     @Override
     public Overlay set(final int pIndex, final Overlay pElement) {
         //#396 fix, null check
-        if (pElement==null){
+        if (pElement == null) {
             Exception ex = new Exception();
-            Log.e(IMapView.LOGTAG, "Attempt to set a null overlay to the collection. This is probably a bug and should be reported!",ex);
+            Log.e(IMapView.LOGTAG, "Attempt to set a null overlay to the collection. This is probably a bug and should be reported!", ex);
             return null;
         } else {
             Overlay overlay = mOverlayList.set(pIndex, pElement);
@@ -87,9 +89,24 @@ public class DefaultOverlayManager extends AbstractList<Overlay> implements Over
     @Override
     public Iterable<Overlay> overlaysReversed() {
         return new Iterable<Overlay>() {
+
+            /**
+             * @since 6.1.0
+             */
+            private ListIterator<Overlay> bulletProofReverseListIterator() {
+                while (true) {
+                    try {
+                        return mOverlayList.listIterator(mOverlayList.size());
+                    } catch (final IndexOutOfBoundsException e) {
+                        // thread-concurrency fix - in case an item is removed in a very inappropriate time
+                        // cf. https://github.com/osmdroid/osmdroid/issues/1260
+                    }
+                }
+            }
+
             @Override
             public Iterator<Overlay> iterator() {
-                final ListIterator<Overlay> i = mOverlayList.listIterator(mOverlayList.size());
+                final ListIterator<Overlay> i = bulletProofReverseListIterator();
 
                 return new Iterator<Overlay>() {
                     @Override
@@ -119,21 +136,53 @@ public class DefaultOverlayManager extends AbstractList<Overlay> implements Over
 
     @Override
     public void onDraw(final Canvas c, final MapView pMapView) {
+        onDrawHelper(c, pMapView, pMapView.getProjection());
+    }
+
+    /**
+     * @since 6.1.0
+     */
+    @Override
+    public void onDraw(final Canvas c, final Projection pProjection) {
+        onDrawHelper(c, null, pProjection);
+    }
+
+    /**
+     * @param pMapView    may be null
+     * @param pProjection may NOT be null
+     * @since 6.1.0
+     */
+    private void onDrawHelper(final Canvas c, final MapView pMapView, final Projection pProjection) {
+        //fix for https://github.com/osmdroid/osmdroid/issues/904
+        if (mTilesOverlay != null)
+            mTilesOverlay.protectDisplayedTilesForCache(c, pProjection);
+        for (final Overlay overlay : mOverlayList) {
+            if (overlay != null && overlay.isEnabled() && overlay instanceof TilesOverlay) {
+                ((TilesOverlay) overlay).protectDisplayedTilesForCache(c, pProjection);
+            }
+        }
 
         //always pass false, the shadow parameter will be removed in a later version of osmdroid, this change should result in the on draw being called twice
         if (mTilesOverlay != null && mTilesOverlay.isEnabled()) {
-            mTilesOverlay.draw(c, pMapView, false);
+            if (pMapView != null) {
+                mTilesOverlay.draw(c, pMapView, false);
+            } else {
+                mTilesOverlay.draw(c, pProjection);
+            }
         }
 
         //always pass false, the shadow parameter will be removed in a later version of osmdroid, this change should result in the on draw being called twice
         for (final Overlay overlay : mOverlayList) {
             //#396 fix, null check
-            if (overlay!=null && overlay.isEnabled()) {
-                overlay.draw(c, pMapView, false);
+            if (overlay != null && overlay.isEnabled()) {
+                if (pMapView != null) {
+                    overlay.draw(c, pMapView, false);
+                } else {
+                    overlay.draw(c, pProjection);
+                }
             }
         }
         //potential fix for #52 pMapView.invalidate();
-
     }
 
     @Override
@@ -146,6 +195,28 @@ public class DefaultOverlayManager extends AbstractList<Overlay> implements Over
             overlay.onDetach(pMapView);
         }
         this.clear();
+    }
+
+    @Override
+    public void onPause() {
+        if (mTilesOverlay != null) {
+            mTilesOverlay.onPause();
+        }
+
+        for (final Overlay overlay : this.overlaysReversed()) {
+            overlay.onPause();
+        }
+    }
+
+    @Override
+    public void onResume() {
+        if (mTilesOverlay != null) {
+            mTilesOverlay.onResume();
+        }
+
+        for (final Overlay overlay : this.overlaysReversed()) {
+            overlay.onResume();
+        }
     }
 
     @Override
@@ -205,7 +276,7 @@ public class DefaultOverlayManager extends AbstractList<Overlay> implements Over
         return false;
     }
 
-	/* GestureDetector.OnDoubleTapListener */
+    /* GestureDetector.OnDoubleTapListener */
 
     @Override
     public boolean onDoubleTap(final MotionEvent e, final MapView pMapView) {
@@ -240,7 +311,7 @@ public class DefaultOverlayManager extends AbstractList<Overlay> implements Over
         return false;
     }
 
-	/* OnGestureListener */
+    /* OnGestureListener */
 
     @Override
     public boolean onDown(final MotionEvent pEvent, final MapView pMapView) {

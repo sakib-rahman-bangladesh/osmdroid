@@ -1,7 +1,6 @@
 package org.osmdroid.samplefragments.geopackage;
 
 import android.content.DialogInterface;
-import android.os.Build;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.InputDevice;
@@ -24,12 +23,12 @@ import org.osmdroid.gpkg.tiles.raster.GeopackageRasterTileSource;
 import org.osmdroid.samplefragments.BaseSampleFragment;
 import org.osmdroid.tileprovider.tilesource.XYTileSource;
 import org.osmdroid.tileprovider.util.StorageUtils;
-import org.osmdroid.views.MapView;
 
 import java.io.File;
 import java.io.FileFilter;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -51,6 +50,7 @@ public class GeopackageSample extends BaseSampleFragment {
     XYTileSource currentSource = null;
     GeoPackageProvider geoPackageProvider = null;
     android.app.AlertDialog alertDialog = null;
+
     @Override
     public String getSampleTitle() {
         return "Geopackage Raster Tiles";
@@ -68,36 +68,34 @@ public class GeopackageSample extends BaseSampleFragment {
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
 
         View root = inflater.inflate(R.layout.map_with_locationbox, container, false);
-        mMapView = (MapView) root.findViewById(R.id.mapview);
+        mMapView = root.findViewById(R.id.mapview);
 
-        if (Build.VERSION.SDK_INT >= 12) {
-            mMapView.setOnGenericMotionListener(new View.OnGenericMotionListener() {
-                /**
-                 * mouse wheel zooming ftw
-                 * http://stackoverflow.com/questions/11024809/how-can-my-view-respond-to-a-mousewheel
-                 * @param v
-                 * @param event
-                 * @return
-                 */
-                @Override
-                public boolean onGenericMotion(View v, MotionEvent event) {
-                    if (0 != (event.getSource() & InputDevice.SOURCE_CLASS_POINTER)) {
-                        switch (event.getAction()) {
-                            case MotionEvent.ACTION_SCROLL:
-                                if (event.getAxisValue(MotionEvent.AXIS_VSCROLL) < 0.0f)
-                                    mMapView.getController().zoomOut();
-                                else {
-                                    mMapView.getController().zoomIn();
-                                }
-                                return true;
-                        }
+        mMapView.setOnGenericMotionListener(new View.OnGenericMotionListener() {
+            /**
+             * mouse wheel zooming ftw
+             * http://stackoverflow.com/questions/11024809/how-can-my-view-respond-to-a-mousewheel
+             * @param v
+             * @param event
+             * @return
+             */
+            @Override
+            public boolean onGenericMotion(View v, MotionEvent event) {
+                if (0 != (event.getSource() & InputDevice.SOURCE_CLASS_POINTER)) {
+                    switch (event.getAction()) {
+                        case MotionEvent.ACTION_SCROLL:
+                            if (event.getAxisValue(MotionEvent.AXIS_VSCROLL) < 0.0f)
+                                mMapView.getController().zoomOut();
+                            else {
+                                mMapView.getController().zoomIn();
+                            }
+                            return true;
                     }
-                    return false;
                 }
-            });
-        }
+                return false;
+            }
+        });
 
-        textViewCurrentLocation = (TextView) root.findViewById(R.id.textViewCurrentLocation);
+        textViewCurrentLocation = root.findViewById(R.id.textViewCurrentLocation);
         return root;
     }
 
@@ -114,24 +112,24 @@ public class GeopackageSample extends BaseSampleFragment {
         if (maps.length == 0) {
             //show a warning that no map files were found
             android.app.AlertDialog.Builder alertDialogBuilder = new android.app.AlertDialog.Builder(
-                getContext());
+                    getContext());
 
             // set title
             alertDialogBuilder.setTitle("No Geopackage files found");
 
             // set dialog message
             alertDialogBuilder
-                .setMessage("In order to render map tiles, you'll need to either create or obtain .gpkg files. See http://www.geopackage.org/ for more info. Place them in "
-                    + Configuration.getInstance().getOsmdroidBasePath().getAbsolutePath())
-                .setCancelable(false)
-                .setPositiveButton("Yes", new DialogInterface.OnClickListener() {
-                    public void onClick(DialogInterface dialog, int id) {
-                        if (alertDialog != null) {
-                            alertDialog.hide();
-                            alertDialog.dismiss();
+                    .setMessage("In order to render map tiles, you'll need to either create or obtain .gpkg files. See http://www.geopackage.org/ for more info. Place them in "
+                            + Configuration.getInstance().getOsmdroidBasePath().getAbsolutePath())
+                    .setCancelable(false)
+                    .setPositiveButton("Yes", new DialogInterface.OnClickListener() {
+                        public void onClick(DialogInterface dialog, int id) {
+                            if (alertDialog != null) {
+                                alertDialog.hide();
+                                alertDialog.dismiss();
+                            }
                         }
-                    }
-                });
+                    });
 
 
             // create alert dialog
@@ -211,14 +209,13 @@ public class GeopackageSample extends BaseSampleFragment {
         StringBuilder sb = new StringBuilder();
         IGeoPoint mapCenter = mMapView.getMapCenter();
         sb.append(df.format(mapCenter.getLatitude()) + "," +
-            df.format(mapCenter.getLongitude())
-            + ",zoom=" + mMapView.getZoomLevel());
+                df.format(mapCenter.getLongitude())
+                + ",zoom=" + mMapView.getZoomLevelDouble());
 
         if (currentSource != null) {
             sb.append("\n");
             sb.append(currentSource.name() + "," + currentSource.getBaseUrl());
         }
-
 
 
         textViewCurrentLocation.setText(sb.toString());
@@ -229,9 +226,9 @@ public class GeopackageSample extends BaseSampleFragment {
      *
      * @return
      */
-    protected static Set<File> findMapFiles() {
+    protected Set<File> findMapFiles() {
         Set<File> maps = new HashSet<>();
-        List<StorageUtils.StorageInfo> storageList = StorageUtils.getStorageList();
+        List<StorageUtils.StorageInfo> storageList = StorageUtils.getStorageList(getActivity());
         for (int i = 0; i < storageList.size(); i++) {
             File f = new File(storageList.get(i).path + File.separator + "osmdroid" + File.separator);
             if (f.exists()) {
@@ -241,20 +238,16 @@ public class GeopackageSample extends BaseSampleFragment {
         return maps;
     }
 
-    static private Collection<? extends File> scan(File f) {
+    private Collection<? extends File> scan(File f) {
         List<File> ret = new ArrayList<>();
         File[] files = f.listFiles(new FileFilter() {
             @Override
             public boolean accept(File pathname) {
-                if (pathname.getName().toLowerCase().endsWith(".gpkg"))
-                    return true;
-                return false;
+                return pathname.getName().toLowerCase().endsWith(".gpkg");
             }
         });
         if (files != null) {
-            for (int i = 0; i < files.length; i++) {
-                ret.add(files[i]);
-            }
+            Collections.addAll(ret, files);
         }
         return ret;
     }

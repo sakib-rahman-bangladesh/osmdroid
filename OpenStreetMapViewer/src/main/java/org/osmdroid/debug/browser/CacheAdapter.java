@@ -16,8 +16,6 @@ import org.osmdroid.debug.util.HumanTime;
 import org.osmdroid.tileprovider.modules.DatabaseFileArchive;
 import org.osmdroid.tileprovider.modules.SqlTileWriter;
 
-import java.util.Date;
-
 /**
  * basic listview adapter
  * created on 12/20/2016.
@@ -45,15 +43,18 @@ public class CacheAdapter extends ArrayAdapter {
     public Object getItem(int id) {
         Cursor select = cursor.select(1, id);
         if (select.moveToNext()) {
-            MapTileExt tile = new MapTileExt(0, 0, 0);
+            MapTileExt tile = new MapTileExt();
             tile.key = select.getLong(select.getColumnIndex(DatabaseFileArchive.COLUMN_KEY));
             tile.source = select.getString(select.getColumnIndex(DatabaseFileArchive.COLUMN_PROVIDER));
             if (!select.isNull(select.getColumnIndex(SqlTileWriter.COLUMN_EXPIRES))) {
-                final long expires = select.getLong(select.getColumnIndex(SqlTileWriter.COLUMN_EXPIRES));
-                tile.setExpires(new Date(expires));
+                tile.expires = select.getLong(select.getColumnIndex(SqlTileWriter.COLUMN_EXPIRES));
+            } else {
+                tile.expires = null;
             }
+            select.close();
             return tile;
         }
+        select.close();
         return null;
     }
 
@@ -68,15 +69,16 @@ public class CacheAdapter extends ArrayAdapter {
         MapTileExt p = (MapTileExt) getItem(position);
         if (p != null) {
             // Find fields to populate in inflated template
-            TextView source = (TextView) convertView.findViewById(R.id.tvSource);
-            TextView key = (TextView) convertView.findViewById(R.id.tvDbKey);
-            TextView expires = (TextView) convertView.findViewById(R.id.tvExpires);
+            TextView source = convertView.findViewById(R.id.tvSource);
+            TextView key = convertView.findViewById(R.id.tvDbKey);
+            TextView expires = convertView.findViewById(R.id.tvExpires);
 
             source.setText(p.source);
             key.setText(p.key + "");
-            try {
-                long time = p.getExpires().getTime();
-
+            if (p.expires == null) {
+                expires.setText("null!");
+            } else {
+                long time = p.expires;
                 //time should be in the future
                 String durationUtilExpires = FileDateUtil.getModifiedDate(time);
                 if (time > System.currentTimeMillis()) {
@@ -87,9 +89,6 @@ public class CacheAdapter extends ArrayAdapter {
                     durationUtilExpires += "\nExpired at " + HumanTime.approximately(System.currentTimeMillis() - time);
                 }
                 expires.setText(durationUtilExpires);
-
-            } catch (Exception ex) {
-                expires.setText("null!");
             }
         }
 

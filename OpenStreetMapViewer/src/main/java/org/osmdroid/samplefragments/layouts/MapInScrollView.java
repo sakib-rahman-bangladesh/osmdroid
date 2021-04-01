@@ -1,9 +1,7 @@
 package org.osmdroid.samplefragments.layouts;
 
 import android.os.Bundle;
-import android.support.v4.view.ViewPager;
 import android.util.Log;
-import android.view.DragEvent;
 import android.view.LayoutInflater;
 import android.view.MotionEvent;
 import android.view.View;
@@ -11,8 +9,6 @@ import android.view.ViewGroup;
 
 import org.osmdroid.R;
 import org.osmdroid.samplefragments.BaseSampleFragment;
-import org.osmdroid.samplefragments.layouts.pager.MapSliderAdapter;
-import org.osmdroid.views.MapView;
 
 /**
  * created on 1/3/2017.
@@ -27,11 +23,10 @@ public class MapInScrollView extends BaseSampleFragment {
     }
 
 
-
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
         View v = inflater.inflate(R.layout.map_scoll, null);
-        mMapView = (MapView) v.findViewById(R.id.mapview);
+        mMapView = v.findViewById(R.id.mapview);
 
         mMapView.setOnTouchListener(new View.OnTouchListener() {
             // Setting on Touch Listener for handling the touch inside ScrollView
@@ -49,14 +44,14 @@ public class MapInScrollView extends BaseSampleFragment {
 
 
     @Override
-    public void onDestroyView(){
+    public void onDestroyView() {
         super.onDestroyView();
         Log.d(TAG, "onDetach");
 
     }
 
     @Override
-    public void onDestroy(){
+    public void onDestroy() {
         super.onDestroy();
         Log.d(TAG, "onDestroy");
 

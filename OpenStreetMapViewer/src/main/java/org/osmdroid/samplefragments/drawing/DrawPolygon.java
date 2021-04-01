@@ -16,7 +16,6 @@ import org.osmdroid.events.MapListener;
 import org.osmdroid.events.ScrollEvent;
 import org.osmdroid.events.ZoomEvent;
 import org.osmdroid.samplefragments.BaseSampleFragment;
-import org.osmdroid.views.MapView;
 import org.osmdroid.views.overlay.gestures.RotationGestureOverlay;
 
 import static org.osmdroid.samplefragments.events.SampleMapEventListener.df;
@@ -24,6 +23,7 @@ import static org.osmdroid.samplefragments.events.SampleMapEventListener.df;
 /**
  * created on 8/26/2017.
  * Map replication is ON for this sample (only viewable for numerically lower zoom levels (higher altitude))
+ *
  * @author Alex O'Ree
  */
 
@@ -42,12 +42,12 @@ public class DrawPolygon extends BaseSampleFragment implements View.OnClickListe
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
         View v = inflater.inflate(R.layout.layout_drawlines, null);
-        btnRotateLeft = (ImageButton) v.findViewById(R.id.btnRotateLeft);
-        btnRotateRight = (ImageButton) v.findViewById(R.id.btnRotateRight);
+        btnRotateLeft = v.findViewById(R.id.btnRotateLeft);
+        btnRotateRight = v.findViewById(R.id.btnRotateRight);
         btnRotateRight.setOnClickListener(this);
         btnRotateLeft.setOnClickListener(this);
-        textViewCurrentLocation = (TextView) v.findViewById(R.id.textViewCurrentLocation);
-        mMapView = (MapView) v.findViewById(org.osmdroid.R.id.mapview);
+        textViewCurrentLocation = v.findViewById(R.id.textViewCurrentLocation);
+        mMapView = v.findViewById(R.id.mapview);
         mMapView.setMapListener(new MapListener() {
             @Override
             public boolean onScroll(ScrollEvent event) {
@@ -69,14 +69,15 @@ public class DrawPolygon extends BaseSampleFragment implements View.OnClickListe
         mRotationGestureOverlay.setEnabled(true);
         mMapView.setMultiTouchControls(true);
         mMapView.getOverlayManager().add(mRotationGestureOverlay);
-        panning = (ImageButton) v.findViewById(R.id.enablePanning);
+        panning = v.findViewById(R.id.enablePanning);
         panning.setOnClickListener(this);
         panning.setBackgroundColor(Color.BLACK);
-        painting = (ImageButton) v.findViewById(R.id.enablePainting);
+        painting = v.findViewById(R.id.enablePainting);
         painting.setOnClickListener(this);
-        paint = (CustomPaintingSurface) v.findViewById(R.id.paintingSurface);
+        paint = v.findViewById(R.id.paintingSurface);
         paint.init(mMapView);
         paint.setMode(CustomPaintingSurface.Mode.Polygon);
+        updateInfo();
         return v;
 
     }
@@ -84,8 +85,8 @@ public class DrawPolygon extends BaseSampleFragment implements View.OnClickListe
     private void updateInfo() {
         IGeoPoint mapCenter = mMapView.getMapCenter();
         textViewCurrentLocation.setText(df.format(mapCenter.getLatitude()) + "," +
-            df.format(mapCenter.getLongitude())
-            + ",zoom=" + mMapView.getZoomLevelDouble() + ",angle=" + mMapView.getMapOrientation());
+                df.format(mapCenter.getLongitude())
+                + ",zoom=" + mMapView.getZoomLevelDouble() + ",angle=" + mMapView.getMapOrientation() + "\nBounds: " + mMapView.getBoundingBox().toString());
 
     }
 

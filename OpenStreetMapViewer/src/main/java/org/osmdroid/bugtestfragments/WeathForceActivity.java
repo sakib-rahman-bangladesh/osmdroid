@@ -35,7 +35,7 @@ import org.osmdroid.views.overlay.mylocation.MyLocationNewOverlay;
  * Created by alex on 10/21/16.
  */
 
-public class WeathForceActivity extends BaseActivity implements LocationListener, IOrientationConsumer,MapEventsReceiver {
+public class WeathForceActivity extends BaseActivity implements LocationListener, IOrientationConsumer, MapEventsReceiver {
     final String TAG = "WeathForceActivity";
     private CompassOverlay mCompassOverlay = null;
     private MyLocationNewOverlay mLocationOverlay;
@@ -64,7 +64,7 @@ public class WeathForceActivity extends BaseActivity implements LocationListener
         //as the app id.
         Configuration.getInstance().setUserAgentValue(getPackageName());
 
-        mMapView = (MapView) findViewById(R.id.mapview);
+        mMapView = findViewById(R.id.mapview);
         mMapView.setTileSource(TileSourceFactory.MAPNIK);
 
 
@@ -95,7 +95,6 @@ public class WeathForceActivity extends BaseActivity implements LocationListener
         mLocationOverlay.enableFollowLocation();
         mLocationOverlay.enableMyLocation();
         this.mMapView.getOverlayManager().add(mLocationOverlay);
-        mMapView.setBuiltInZoomControls(true);
         mMapView.setMultiTouchControls(true);
         mMapView.setTilesScaledToDpi(true);
     }
@@ -136,8 +135,8 @@ public class WeathForceActivity extends BaseActivity implements LocationListener
 
                 return;
             }
-            lm.requestLocationUpdates(LocationManager.GPS_PROVIDER, 0, 0, (LocationListener) this);
-            lm.requestLocationUpdates(LocationManager.NETWORK_PROVIDER, 0, 0, (LocationListener) this);
+            lm.requestLocationUpdates(LocationManager.GPS_PROVIDER, 0, 0, this);
+            lm.requestLocationUpdates(LocationManager.NETWORK_PROVIDER, 0, 0, this);
         } catch (Exception ex) {
         }
         compass = new InternalCompassOrientationProvider(this);
@@ -151,7 +150,7 @@ public class WeathForceActivity extends BaseActivity implements LocationListener
         if (mMapView == null)
             return;
         //after the first fix, schedule the task to change the icon
-        //mMapView.getController().setCenter(new GeoPoint(location.getLatitude(), location.getLongitude()));
+        //mMapView.getController().setExpectedCenter(new GeoPoint(location.getLatitude(), location.getLongitude()));
         mMapView.invalidate();
         gpsbearing = location.getBearing();
         gpsspeed = location.getSpeed();
@@ -201,7 +200,7 @@ public class WeathForceActivity extends BaseActivity implements LocationListener
 
         GeomagneticField gf = new GeomagneticField(lat, lon, alt, timeOfFix);
         trueNorth = orientationToMagneticNorth + gf.getDeclination();
-        gf=null;
+        gf = null;
         synchronized (trueNorth) {
             if (trueNorth > 360.0f) {
                 trueNorth = trueNorth - 360.0f;
@@ -233,11 +232,11 @@ public class WeathForceActivity extends BaseActivity implements LocationListener
             this.runOnUiThread(new Runnable() {
                 @Override
                 public void run() {
-                    if (this!=null ) {
+                    if (this != null) {
                         Log.i(TAG
                                 , "GPS Speed: " + gpsspeed + "m/s  GPS Bearing: " + gpsbearing +
-                                "\nDevice Orientation: " + (int) deviceOrientation + "  Compass heading: " + (int) orientationToMagneticNorth + "\n" +
-                                "True north: " + trueNorth.intValue() + " Map Orientation: " + (int) mMapView.getMapOrientation());
+                                        "\nDevice Orientation: " + deviceOrientation + "  Compass heading: " + (int) orientationToMagneticNorth + "\n" +
+                                        "True north: " + trueNorth.intValue() + " Map Orientation: " + (int) mMapView.getMapOrientation());
                     }
                 }
             });

@@ -1,7 +1,7 @@
 package org.osmdroid.samplefragments.tilesources;
 
-import org.osmdroid.tileprovider.MapTile;
 import org.osmdroid.tileprovider.tilesource.OnlineTileSourceBase;
+import org.osmdroid.util.MapTileIndex;
 
 /**
  * sample custom tile source
@@ -9,10 +9,11 @@ import org.osmdroid.tileprovider.tilesource.OnlineTileSourceBase;
  */
 public class USGSTileSource extends OnlineTileSourceBase {
 
-    public USGSTileSource(){
+    public USGSTileSource() {
         this("USGS Topo", 0, 18, 256, "",
-                new String[] { "http://basemap.nationalmap.gov/ArcGIS/rest/services/USGSTopo/MapServer/tile/"});
+                new String[]{"http://basemap.nationalmap.gov/ArcGIS/rest/services/USGSTopo/MapServer/tile/"});
     }
+
     /**
      * Constructor
      *
@@ -24,12 +25,12 @@ public class USGSTileSource extends OnlineTileSourceBase {
      * @param aBaseUrl             the base url(s) of the tile server used when constructing the url to download the tiles
      */
     public USGSTileSource(String aName, int aZoomMinLevel, int aZoomMaxLevel, int aTileSizePixels, String aImageFilenameEnding, String[] aBaseUrl) {
-        super(aName, aZoomMinLevel, aZoomMaxLevel, aTileSizePixels, aImageFilenameEnding, aBaseUrl,"USGS");
+        super(aName, aZoomMinLevel, aZoomMaxLevel, aTileSizePixels, aImageFilenameEnding, aBaseUrl, "USGS");
     }
 
     @Override
-    public String getTileURLString(MapTile aTile) {
-        return getBaseUrl() + aTile.getZoomLevel() + "/" + aTile.getY() + "/" + aTile.getX()
+    public String getTileURLString(final long pMapTileIndex) {
+        return getBaseUrl() + MapTileIndex.getZoom(pMapTileIndex) + "/" + MapTileIndex.getY(pMapTileIndex) + "/" + MapTileIndex.getX(pMapTileIndex)
                 + mImageFilenameEnding;
     }
 }

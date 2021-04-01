@@ -29,7 +29,8 @@ proguard/
 *.iml
 *.ipr
 *.iws
-.idea/
+.idea/*
+!.idea/codeStyles/
 
 # Gradle
 build/
@@ -48,3 +49,4 @@ OpenStreetMapViewer/src/androidTest/
 
 docs/
 *.orig
+osmdroid-android/src/main/java/org/osmdroid/OsmdroidBuildInfo.java

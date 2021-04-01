@@ -6,17 +6,13 @@
 package org.osmdroid.samplefragments.cache;
 
 import android.os.Bundle;
-import android.os.Environment;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 
-import org.osmdroid.config.Configuration;
 import org.osmdroid.samplefragments.BaseSampleFragment;
 import org.osmdroid.tileprovider.util.StorageUtils;
-import org.osmdroid.views.MapView;
 
-import java.io.File;
 import java.util.List;
 
 /**
@@ -25,11 +21,6 @@ import java.util.List;
  * @see org.osmdroid.intro.StoragePreferenceFragment
  */
 public class SampleAlternateCacheDir extends BaseSampleFragment {
-
-    @Override
-    public boolean skipOnCiTests(){
-        return true;
-    }
 
     @Override
     public String getSampleTitle() {
@@ -44,14 +35,14 @@ public class SampleAlternateCacheDir extends BaseSampleFragment {
         // an inflater call.
 
         //get the list of all mount points
-        List<StorageUtils.StorageInfo> storageList = StorageUtils.getStorageList();
+        List<StorageUtils.StorageInfo> storageList = StorageUtils.getStorageList(getActivity());
         //loop over them to find a writable location
         //or do whatever you need to do to select a new tile cache path.
 
         //then set it to the current tile cache location. must be done BEFORE creating the map
         //note this is before setContentView. The other option is it bounce the tile provider
         //via mMapView.setTileProvider();
-        
+
         //Configuration.getInstance().setOsmdroidTileCache(adrive);
 
 
@@ -61,7 +52,7 @@ public class SampleAlternateCacheDir extends BaseSampleFragment {
 
         View v = inflater.inflate(org.osmdroid.R.layout.activity_starter_mapview, null);
 
-        mMapView = (MapView) v.findViewById(org.osmdroid.R.id.mapview);
+        mMapView = v.findViewById(org.osmdroid.R.id.mapview);
 
         return v;
     }

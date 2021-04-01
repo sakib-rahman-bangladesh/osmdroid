@@ -1,294 +1,158 @@
 package org.osmdroid.views.overlay;
 
-import android.content.Context;
-import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.Paint;
-import android.graphics.Path;
-import android.view.MotionEvent;
 
 import org.osmdroid.util.GeoPoint;
 import org.osmdroid.views.MapView;
-import org.osmdroid.views.Projection;
-import org.osmdroid.views.util.constants.MathConstants;
 
 import java.util.ArrayList;
-import java.util.List;
 
 /**
  * A polyline is a list of points, where line segments are drawn between consecutive points.
  * Mimics the Polyline class from Google Maps Android API v2 as much as possible. Main differences:<br>
  * - Doesn't support Z-Index: drawing order is the order in map overlays<br>
  * - Supports InfoWindow (must be a BasicInfoWindow). <br>
- * <p></p>
- * Mimics the Polyline class from Google Maps Android API v2 as much as possible. Main differences:<br/>
- * - Doesn't support Z-Index: drawing order is the order in map overlays<br/>
- * - Supports InfoWindow (must be a BasicInfoWindow). <br/>
- *
+ * <p>
  * <img alt="Class diagram around Marker class" width="686" height="413" src='src='./doc-files/marker-infowindow-classes.png' />
  *
  * @author M.Kergall
  * @see <a href="http://developer.android.com/reference/com/google/android/gms/maps/model/Polyline.html">Google Maps Polyline</a>
  */
-public class Polyline extends OverlayWithIW {
-	
-	private boolean mGeodesic;
-	private final Path mPath = new Path();
-	private final Paint mPaint = new Paint();
-	/** Bounding rectangle for view */
-    private ArrowsLinearRing mOutline = new ArrowsLinearRing(mPath);
-	private String id=null;
+public class Polyline extends PolyOverlayWithIW {
 
-	protected OnClickListener mOnClickListener;
+    protected OnClickListener mOnClickListener;
 
-	/** Use {@link #Polyline()} instead */
-	@Deprecated
-	public Polyline(Context ctx) {
-		this();
-	}
+    /**
+     * If MapView is not provided, infowindow popup will not function unless you set it yourself.
+     */
+    public Polyline() {
+        this(null);
+    }
 
-	public Polyline(){
-		super();
-		//default as defined in Google API:
-		this.mPaint.setColor(Color.BLACK);
-		this.mPaint.setStrokeWidth(10.0f);
-		this.mPaint.setStyle(Paint.Style.STROKE);
-		mPaint.setAntiAlias(true);
-		this.clearPath();
-		mGeodesic = false;
-	}
-	
-	protected void clearPath() {
-		mOutline.clearPath();
-	}
+    /**
+     * If MapView is null, infowindow popup will not function unless you set it yourself.
+     */
+    public Polyline(MapView mapView) {
+        this(mapView, false);
+    }
 
-	protected void addPoint(final GeoPoint aPoint) {
-        mOutline.addPoint(aPoint);
-	}
+    /**
+     * @since 6.2.0
+     */
+    public Polyline(final MapView pMapView, final boolean pUsePath, final boolean pClosePath) {
+        super(pMapView, pUsePath, pClosePath);
+        //default as defined in Google API:
+        mOutlinePaint.setColor(Color.BLACK);
+        mOutlinePaint.setStrokeWidth(10.0f);
+        mOutlinePaint.setStyle(Paint.Style.STROKE);
+        mOutlinePaint.setAntiAlias(true);
+    }
 
-	@Deprecated
-	protected void addPoint(final int aLatitudeE6, final int aLongitudeE6) {
-		addPoint(new GeoPoint(aLatitudeE6, aLongitudeE6));
-	}
+    /**
+     * @param pUsePath true if you want the drawing to use Path instead of Canvas.drawLines
+     *                 Not recommended in all cases, given the performances.
+     *                 Useful though if you want clean alpha vertices
+     *                 cf. https://github.com/osmdroid/osmdroid/issues/1280
+     * @since 6.1.0
+     */
+    public Polyline(final MapView pMapView, final boolean pUsePath) {
+        this(pMapView, pUsePath, false);
+    }
 
-	/** @return a copy of the points. */
-	public List<GeoPoint> getPoints(){
-		return mOutline.getPoints();
-	}
-	
-	public int getNumberOfPoints(){
-		return getPoints().size();
-	}
-	
-	public int getColor(){
-		return mPaint.getColor();
-	}
-	
-	public float getWidth(){
-		return mPaint.getStrokeWidth();
-	}
-	
-	/** @return the Paint used. This allows to set advanced Paint settings. */
-	public Paint getPaint(){
-		return mPaint;
-	}
-	
-	public boolean isVisible(){
-		return isEnabled();
-	}
-	
-	public boolean isGeodesic(){
-		return mGeodesic;
-	}
-	
-	public void setColor(int color){
-		mPaint.setColor(color);
-	}
-	
-	public void setWidth(float width){
-		mPaint.setStrokeWidth(width);
-		mOutline.setStrokeWidth(width);
-	}
-	
-	public void setVisible(boolean visible){
-		setEnabled(visible);
-	}
+    /**
+     * @return a copy of the actual points
+     * @deprecated Use {@link #getActualPoints()} instead; copy the list if necessary
+     */
+    @Deprecated
+    public ArrayList<GeoPoint> getPoints() {
+        return new ArrayList<>(getActualPoints());
+    }
 
-	public void setOnClickListener(OnClickListener listener){
-		mOnClickListener = listener;
-	}
+    /**
+     * @deprecated Use {{@link #getOutlinePaint()}} instead
+     */
+    @Deprecated
+    public int getColor() {
+        return mOutlinePaint.getColor();
+    }
 
-	/**
-	 * A directional arrow is a single arrow drawn in the middle of two points of a to
-	 * provide a visual cue for direction of movement between the two points.
-	 *
-	 * By default the arrows always point towards the lower index as the list of GeoPoints are
-	 * processed. The direction the arrows point can be inverted.
-	 *
-	 * @param drawDirectionalArrows enable or disable the feature. Cannot be null
-	 */
-	public void setDrawDirectionalArrows(boolean drawDirectionalArrows) {
-		mOutline.setDrawDirectionalArrows(drawDirectionalArrows, null , mPaint.getStrokeWidth());
-	}
+    /**
+     * @deprecated Use {{@link #getOutlinePaint()}} instead
+     */
+    @Deprecated
+    public float getWidth() {
+        return mOutlinePaint.getStrokeWidth();
+    }
 
-	/**
-	 * A directional arrow is a single arrow drawn in the middle of two points to
-	 * provide a visual cue for direction of movement between the two points.
-	 *
-	 * By default the arrows always point towards the lower index as the list of GeoPoints are
-	 * processed. The direction the arrows point can be inverted.
-	 *
-	 * @param drawDirectionalArrows enable or disable the feature. Cannot be null
-	 * @param invertDirection invert the direction the arrows are drawn. Use null for default value
-	 */
-	public void setDrawDirectionalArrows(
-			boolean drawDirectionalArrows, Boolean invertDirection) {
-		mOutline.setDrawDirectionalArrows(drawDirectionalArrows, invertDirection, mPaint.getStrokeWidth());
-	}
+    /**
+     * @deprecated Use {{@link #getOutlinePaint()}} instead
+     */
+    @Deprecated
+    public Paint getPaint() {
+        return getOutlinePaint();
+    }
 
-	protected void addGreatCircle(final GeoPoint startPoint, final GeoPoint endPoint, final int numberOfPoints) {
-		//	adapted from page http://compastic.blogspot.co.uk/2011/07/how-to-draw-great-circle-on-map-in.html
-		//	which was adapted from page http://maps.forum.nu/gm_flight_path.html
+    /**
+     * @deprecated Use {{@link #getOutlinePaint()}} instead
+     */
+    @Deprecated
+    public void setColor(int color) {
+        mOutlinePaint.setColor(color);
+    }
 
-		// convert to radians
-		final double lat1 = startPoint.getLatitude() * MathConstants.DEG2RAD;
-		final double lon1 = startPoint.getLongitude() * MathConstants.DEG2RAD;
-		final double lat2 = endPoint.getLatitude() * MathConstants.DEG2RAD;
-		final double lon2 = endPoint.getLongitude() * MathConstants.DEG2RAD;
+    /**
+     * @deprecated Use {{@link #getOutlinePaint()}} instead
+     */
+    @Deprecated
+    public void setWidth(float width) {
+        mOutlinePaint.setStrokeWidth(width);
+    }
 
-		final double d = 2 * Math.asin(Math.sqrt(Math.pow(Math.sin((lat1 - lat2) / 2), 2) + Math.cos(lat1) * Math.cos(lat2)
-				* Math.pow(Math.sin((lon1 - lon2) / 2), 2)));
-		double bearing = Math.atan2(Math.sin(lon1 - lon2) * Math.cos(lat2),
-				Math.cos(lat1) * Math.sin(lat2) - Math.sin(lat1) * Math.cos(lat2) * Math.cos(lon1 - lon2))
-				/ -MathConstants.DEG2RAD;
-		bearing = bearing < 0 ? 360 + bearing : bearing;
-		
-		for (int i = 1; i <= numberOfPoints; i++) {
-			final double f = 1.0 * i / (numberOfPoints+1);
-			final double A = Math.sin((1 - f) * d) / Math.sin(d);
-			final double B = Math.sin(f * d) / Math.sin(d);
-			final double x = A * Math.cos(lat1) * Math.cos(lon1) + B * Math.cos(lat2) * Math.cos(lon2);
-			final double y = A * Math.cos(lat1) * Math.sin(lon1) + B * Math.cos(lat2) * Math.sin(lon2);
-			final double z = A * Math.sin(lat1) + B * Math.sin(lat2);
+    public void setOnClickListener(OnClickListener listener) {
+        mOnClickListener = listener;
+    }
 
-			final double latN = Math.atan2(z, Math.sqrt(Math.pow(x, 2) + Math.pow(y, 2)));
-			final double lonN = Math.atan2(y, x);
-			addPoint(new GeoPoint(latN * MathConstants.RAD2DEG, lonN * MathConstants.RAD2DEG));
-		}
-	}
-	
-	/** Set the points. 
-	 * Note that a later change in the original points List will have no effect. 
-	 * To add/remove/change points, you must call setPoints again. 
-	 * If geodesic mode has been set, the long segments will follow the earth "great circle". */
-	public void setPoints(List<GeoPoint> points){
-		clearPath();
-		int size = points.size();
-		for (int i=0; i<size; i++){
-			GeoPoint p = points.get(i);
-			if (!mGeodesic){
-				addPoint(p);
-			} else {
-				if (i>0){
-					//add potential intermediate points:
-					GeoPoint prev = points.get(i-1);
-					final int greatCircleLength = prev.distanceTo(p);
-					//add one point for every 100kms of the great circle path
-					final int numberOfPoints = greatCircleLength/100000;
-					addGreatCircle(prev, p, numberOfPoints);
-				}
-				addPoint(p);
-			}
-		}
-	}
-	
-	/** Sets whether to draw each segment of the line as a geodesic or not. 
-	 * Warning: it takes effect only if set before setting the points in the Polyline. */
-	public void setGeodesic(boolean geodesic){
-		mGeodesic = geodesic;
-	}
+    /**
+     * Internal method used to ensure that the infowindow will have a default position in all cases,
+     * so that the user can call showInfoWindow even if no tap occured before.
+     * Currently, set the position on the "middle" point of the polyline.
+     */
+    public interface OnClickListener {
+        abstract boolean onClick(Polyline polyline, MapView mapView, GeoPoint eventPos);
+    }
 
-	@Override
-	public void draw(final Canvas canvas, final MapView mapView, final boolean shadow) {
+    /**
+     * default behaviour when no click listener is set
+     */
+    public boolean onClickDefault(Polyline polyline, MapView mapView, GeoPoint eventPos) {
+        polyline.setInfoWindowLocation(eventPos);
+        polyline.showInfoWindow();
+        return true;
+    }
 
-		if (shadow) {
-			return;
-		}
+    @Override
+    public void onDetach(MapView mapView) {
+        super.onDetach(mapView);
+        mOnClickListener = null;
+    }
 
-        final Projection pj = mapView.getProjection();
-        mPath.rewind();
+    /**
+     * @return aggregate distance (in meters)
+     * @since 6.0.3
+     */
+    public double getDistance() {
+        return mOutline.getDistance();
+    }
 
-        mOutline.setClipArea(mapView);
-        mOutline.buildPathPortion(pj, false, null);
-
-        canvas.drawPath(mPath, mPaint);
-
-        mOutline.drawDirectionalArrows(canvas, mPaint);
-	}
-	
-	/** Detection is done is screen coordinates. 
-	 * @param point
-	 * @param tolerance in pixels
-	 * @return true if the Polyline is close enough to the point. 
-	 */
-	public boolean isCloseTo(GeoPoint point, double tolerance, MapView mapView) {
-		return mOutline.isCloseTo(point, tolerance, mapView.getProjection());
-	}
-
-	public void showInfoWindow(GeoPoint position){
-		if (mInfoWindow == null)
-			return;
-		mInfoWindow.open(this, position, 0, 0);
-	}
-
-	@Override public boolean onSingleTapConfirmed(final MotionEvent event, final MapView mapView){
-		final Projection pj = mapView.getProjection();
-		GeoPoint eventPos = (GeoPoint) pj.fromPixels((int)event.getX(), (int)event.getY());
-		double tolerance = mPaint.getStrokeWidth();
-		boolean touched = isCloseTo(eventPos, tolerance, mapView);
-		if (touched){
-			if (mOnClickListener == null){
-				return onClickDefault(this, mapView, eventPos);
-			} else {
-				return mOnClickListener.onClick(this, mapView, eventPos);
-			}
-		} else
-			return touched;
-	}
-
-	/**
-	 * @since 6.0.0
-	 * @return
-	 */
-	public String getId() {
-		return id;
-	}
-
-	/**
-	 * @since 6.0.0
-	 * @param id
-	 */
-	public void setId(String id) {
-		this.id = id;
-	}
-
-	//-- Polyline events listener interfaces ------------------------------------
-
-	public interface OnClickListener{
-		abstract boolean onClick(Polyline polyline, MapView mapView, GeoPoint eventPos);
-	}
-
-	/** default behaviour when no click listener is set */
-	protected boolean onClickDefault(Polyline polyline, MapView mapView, GeoPoint eventPos) {
-		polyline.showInfoWindow(eventPos);
-		return true;
-	}
-
-	@Override
-	public void onDetach(MapView mapView) {
-        mOutline = null;
-		mOnClickListener=null;
-		onDestroy();
-	}
-
+    /**
+     * @since 6.2.0
+     */
+    @Override
+    protected boolean click(final MapView pMapView, final GeoPoint pEventPos) {
+        if (mOnClickListener == null) {
+            return onClickDefault(this, pMapView, pEventPos);
+        }
+        return mOnClickListener.onClick(this, pMapView, pEventPos);
+    }
 }

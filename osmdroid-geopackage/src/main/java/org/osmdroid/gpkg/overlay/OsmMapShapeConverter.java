@@ -1,45 +1,50 @@
 /**
- The MIT License
-
- Permission is hereby granted, free of charge, to any person obtaining a copy
- of this software and associated documentation files (the "Software"), to deal
- in the Software without restriction, including without limitation the rights
- to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
- copies of the Software, and to permit persons to whom the Software is
- furnished to do so, subject to the following conditions:
-
- The above copyright notice and this permission notice shall be included in all
- copies or substantial portions of the Software.
-
- THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
- IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
- FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
- AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
- LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
- OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
- SOFTWARE.
-
- This code was sourced from the National Geospatial Intelligency Agency and was
- originally licensed under the MIT license. It has been modified to support
- osmdroid's APIs.
-
- You can find the original code base here:
- https://github.com/ngageoint/geopackage-android-map
- https://github.com/ngageoint/geopackage-android
+ * The MIT License
+ * <p>
+ * Permission is hereby granted, free of charge, to any person obtaining a copy
+ * of this software and associated documentation files (the "Software"), to deal
+ * in the Software without restriction, including without limitation the rights
+ * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+ * copies of the Software, and to permit persons to whom the Software is
+ * furnished to do so, subject to the following conditions:
+ * <p>
+ * The above copyright notice and this permission notice shall be included in all
+ * copies or substantial portions of the Software.
+ * <p>
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+ * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+ * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+ * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+ * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+ * SOFTWARE.
+ * <p>
+ * This code was sourced from the National Geospatial Intelligency Agency and was
+ * originally licensed under the MIT license. It has been modified to support
+ * osmdroid's APIs.
+ * <p>
+ * You can find the original code base here:
+ * https://github.com/ngageoint/geopackage-android-map
+ * https://github.com/ngageoint/geopackage-android
  */
 
 package org.osmdroid.gpkg.overlay;
 
 
-import android.graphics.Bitmap;
-import android.graphics.drawable.BitmapDrawable;
-import android.graphics.drawable.Drawable;
 import android.util.Log;
 
 import org.osmdroid.api.IMapView;
 import org.osmdroid.gpkg.R;
-import org.osmdroid.gpkg.overlay.features.*;
-import org.osmdroid.tileprovider.constants.OpenStreetMapTileProviderConstants;
+import org.osmdroid.gpkg.overlay.features.MarkerOptions;
+import org.osmdroid.gpkg.overlay.features.MultiLatLng;
+import org.osmdroid.gpkg.overlay.features.MultiMarker;
+import org.osmdroid.gpkg.overlay.features.MultiPolyline;
+import org.osmdroid.gpkg.overlay.features.MultiPolylineOptions;
+import org.osmdroid.gpkg.overlay.features.OsmDroidMapShape;
+import org.osmdroid.gpkg.overlay.features.OsmMapShapeType;
+import org.osmdroid.gpkg.overlay.features.PolygonOptions;
+import org.osmdroid.gpkg.overlay.features.PolygonOrientation;
+import org.osmdroid.gpkg.overlay.features.PolylineOptions;
 import org.osmdroid.util.GeoPoint;
 import org.osmdroid.views.MapView;
 import org.osmdroid.views.overlay.Marker;
@@ -124,19 +129,19 @@ public class OsmMapShapeConverter {
 
     /**
      * Constructor with specified projection, see
-          *
+     *
      * @param projection
      */
     public OsmMapShapeConverter(Projection projection, MarkerOptions options, PolylineOptions polylineOptions,
                                 PolygonOptions polygonOptions) {
         Log.i(IMapView.LOGTAG, "Geopackage support is BETA. Please report any issues");
         this.projection = projection;
-        this.polylineOptions=polylineOptions;
-        this.polygonOptions=polygonOptions;
-        this.makerOptions=options;
+        this.polylineOptions = polylineOptions;
+        this.polygonOptions = polygonOptions;
+        this.makerOptions = options;
         if (projection != null) {
             toWgs84 = projection
-                .getTransformation(ProjectionConstants.EPSG_WORLD_GEODETIC_SYSTEM);
+                    .getTransformation(ProjectionConstants.EPSG_WORLD_GEODETIC_SYSTEM);
             Projection wgs84 = toWgs84.getToProjection();
             fromWgs84 = wgs84.getTransformation(projection);
         } else {
@@ -201,7 +206,6 @@ public class OsmMapShapeConverter {
     }
 
 
-
     /**
      * Convert a {@link LineString} to a {@link PolylineOptions}
      *
@@ -211,12 +215,12 @@ public class OsmMapShapeConverter {
     public Polyline toPolyline(LineString lineString) {
 
         Polyline line = new Polyline();
-        if (polylineOptions!=null) {
+        if (polylineOptions != null) {
             line.setTitle(polylineOptions.getTitle());
-            line.setColor(polylineOptions.getColor());
+            line.getOutlinePaint().setColor(polylineOptions.getColor());
             line.setGeodesic(polylineOptions.isGeodesic());
-            line.setWidth(polylineOptions.getWidth());
-            line.setSubDescription(polygonOptions.getSubtitle());
+            line.getOutlinePaint().setStrokeWidth(polylineOptions.getWidth());
+            line.setSubDescription(polylineOptions.getSubtitle());
         }
 
         List<GeoPoint> pts = new ArrayList<>();
@@ -228,7 +232,6 @@ public class OsmMapShapeConverter {
 
         return line;
     }
-
 
 
     /**
@@ -265,7 +268,7 @@ public class OsmMapShapeConverter {
                     holeLatLngs.add(latLng);
                     if (point.hasZ()) {
                         z = (z == null) ? point.getZ() : Math.max(z,
-                            point.getZ());
+                                point.getZ());
                     }
                 }
                 holes.add(holeLatLngs);
@@ -277,10 +280,10 @@ public class OsmMapShapeConverter {
         newPoloygon.setPoints(pts);
         newPoloygon.setHoles(holes);
 
-        if (polygonOptions!=null){
-            newPoloygon.setFillColor(polygonOptions.getFillColor());
-            newPoloygon.setStrokeColor(polygonOptions.getStrokeColor());
-            newPoloygon.setStrokeWidth(polygonOptions.getStrokeWidth());
+        if (polygonOptions != null) {
+            newPoloygon.getFillPaint().setColor(polygonOptions.getFillColor());
+            newPoloygon.getOutlinePaint().setColor(polygonOptions.getStrokeColor());
+            newPoloygon.getOutlinePaint().setStrokeWidth(polygonOptions.getStrokeWidth());
             newPoloygon.setTitle(polygonOptions.getTitle());
         }
 
@@ -294,7 +297,7 @@ public class OsmMapShapeConverter {
      * @return polygon options
      * @since 1.4.1
      */
-    public  org.osmdroid.views.overlay.Polygon toCurvePolygon(CurvePolygon curvePolygon) {
+    public org.osmdroid.views.overlay.Polygon toCurvePolygon(CurvePolygon curvePolygon) {
 
         org.osmdroid.views.overlay.Polygon polygonOptions = new org.osmdroid.views.overlay.Polygon();
         List<GeoPoint> pts = new ArrayList<>();
@@ -324,7 +327,7 @@ public class OsmMapShapeConverter {
                 }
             } else {
                 throw new GeoPackageException("Unsupported Curve Type: "
-                    + curve.getClass().getSimpleName());
+                        + curve.getClass().getSimpleName());
             }
 
 
@@ -348,12 +351,12 @@ public class OsmMapShapeConverter {
                         holeLatLngs.add(latLng);
                         if (point.hasZ()) {
                             z = (z == null) ? point.getZ() : Math.max(z,
-                                point.getZ());
+                                    point.getZ());
                         }
                     }
                 } else {
                     throw new GeoPackageException("Unsupported Curve Hole Type: "
-                        + hole.getClass().getSimpleName());
+                            + hole.getClass().getSimpleName());
                 }
                 holes.add(holeLatLngs);
 
@@ -365,7 +368,6 @@ public class OsmMapShapeConverter {
 
         return polygonOptions;
     }
-
 
 
     /**
@@ -406,7 +408,6 @@ public class OsmMapShapeConverter {
     }
 
 
-
     /**
      * Convert a {@link MultiPolygon} to a {@link Polygon}
      *
@@ -425,10 +426,6 @@ public class OsmMapShapeConverter {
 
         return polygons;
     }
-
-
-
-
 
 
     /**
@@ -485,71 +482,71 @@ public class OsmMapShapeConverter {
         switch (geometryType) {
             case POINT:
                 shape = new OsmDroidMapShape(geometryType,
-                    OsmMapShapeType.LAT_LNG, toLatLng((Point) geometry));
+                        OsmMapShapeType.LAT_LNG, toLatLng((Point) geometry));
                 break;
             case LINESTRING:
                 shape = new OsmDroidMapShape(geometryType,
-                    OsmMapShapeType.POLYLINE_OPTIONS,
-                    toPolyline((LineString) geometry));
+                        OsmMapShapeType.POLYLINE_OPTIONS,
+                        toPolyline((LineString) geometry));
                 break;
             case POLYGON:
                 shape = new OsmDroidMapShape(geometryType,
-                    OsmMapShapeType.POLYGON_OPTIONS,
-                    toPolygon((Polygon) geometry));
+                        OsmMapShapeType.POLYGON_OPTIONS,
+                        toPolygon((Polygon) geometry));
                 break;
             case MULTIPOINT:
                 shape = new OsmDroidMapShape(geometryType,
-                    OsmMapShapeType.MULTI_LAT_LNG,
-                    toLatLngs((MultiPoint) geometry));
+                        OsmMapShapeType.MULTI_LAT_LNG,
+                        toLatLngs((MultiPoint) geometry));
                 break;
             case MULTILINESTRING:
                 shape = new OsmDroidMapShape(geometryType,
-                    OsmMapShapeType.MULTI_POLYLINE_OPTIONS,
-                    toPolylines((MultiLineString) geometry));
+                        OsmMapShapeType.MULTI_POLYLINE_OPTIONS,
+                        toPolylines((MultiLineString) geometry));
                 break;
             case MULTIPOLYGON:
                 shape = new OsmDroidMapShape(geometryType,
-                    OsmMapShapeType.MULTI_POLYGON_OPTIONS,
-                    toPolygons((MultiPolygon) geometry));
+                        OsmMapShapeType.MULTI_POLYGON_OPTIONS,
+                        toPolygons((MultiPolygon) geometry));
                 break;
             case CIRCULARSTRING:
                 shape = new OsmDroidMapShape(geometryType,
-                    OsmMapShapeType.POLYLINE_OPTIONS,
-                    toPolyline((CircularString) geometry));
+                        OsmMapShapeType.POLYLINE_OPTIONS,
+                        toPolyline((CircularString) geometry));
                 break;
             case COMPOUNDCURVE:
                 shape = new OsmDroidMapShape(geometryType,
-                    OsmMapShapeType.MULTI_POLYLINE_OPTIONS,
-                    toPolylines((CompoundCurve) geometry));
+                        OsmMapShapeType.MULTI_POLYLINE_OPTIONS,
+                        toPolylines((CompoundCurve) geometry));
                 break;
             case CURVEPOLYGON:
                 shape = new OsmDroidMapShape(geometryType,
-                    OsmMapShapeType.POLYGON_OPTIONS,
-                    toCurvePolygon((CurvePolygon) geometry));
+                        OsmMapShapeType.POLYGON_OPTIONS,
+                        toCurvePolygon((CurvePolygon) geometry));
                 break;
             case POLYHEDRALSURFACE:
                 shape = new OsmDroidMapShape(geometryType,
-                    OsmMapShapeType.MULTI_POLYGON_OPTIONS,
-                    toPolygons((PolyhedralSurface) geometry));
+                        OsmMapShapeType.MULTI_POLYGON_OPTIONS,
+                        toPolygons((PolyhedralSurface) geometry));
                 break;
             case TIN:
                 shape = new OsmDroidMapShape(geometryType,
-                    OsmMapShapeType.MULTI_POLYGON_OPTIONS,
-                    toPolygons((TIN) geometry));
+                        OsmMapShapeType.MULTI_POLYGON_OPTIONS,
+                        toPolygons((TIN) geometry));
                 break;
             case TRIANGLE:
                 shape = new OsmDroidMapShape(geometryType,
-                    OsmMapShapeType.POLYGON_OPTIONS,
-                    toPolygon((Triangle) geometry));
+                        OsmMapShapeType.POLYGON_OPTIONS,
+                        toPolygon((Triangle) geometry));
                 break;
             case GEOMETRYCOLLECTION:
                 shape = new OsmDroidMapShape(geometryType,
-                    OsmMapShapeType.COLLECTION,
-                    toShapes((GeometryCollection<Geometry>) geometry));
+                        OsmMapShapeType.COLLECTION,
+                        toShapes((GeometryCollection<Geometry>) geometry));
                 break;
             default:
                 throw new GeoPackageException("Unsupported Geometry Type: "
-                    + geometryType.getName());
+                        + geometryType.getName());
         }
 
         return shape;
@@ -562,7 +559,7 @@ public class OsmMapShapeConverter {
      * @return
      */
     public List<OsmDroidMapShape> toShapes(
-        GeometryCollection<Geometry> geometryCollection) {
+            GeometryCollection<Geometry> geometryCollection) {
 
         List<OsmDroidMapShape> shapes = new ArrayList<OsmDroidMapShape>();
 
@@ -590,74 +587,74 @@ public class OsmMapShapeConverter {
         switch (geometryType) {
             case POINT:
                 shape = new OsmDroidMapShape(geometryType, OsmMapShapeType.MARKER,
-                    addLatLngToMap(map, toLatLng2((Point) geometry)));
+                        addLatLngToMap(map, toLatLng2((Point) geometry)));
                 break;
             case LINESTRING:
                 shape = new OsmDroidMapShape(geometryType,
-                    OsmMapShapeType.POLYLINE, addPolylineToMap(map,
-                    toPolyline((LineString) geometry)));
+                        OsmMapShapeType.POLYLINE, addPolylineToMap(map,
+                        toPolyline((LineString) geometry)));
                 break;
             case POLYGON:
                 shape = new OsmDroidMapShape(geometryType,
-                    OsmMapShapeType.POLYGON, addPolygonToMap(map,
-                    toPolygon((Polygon) geometry),
-                    polygonOptions));
+                        OsmMapShapeType.POLYGON, addPolygonToMap(map,
+                        toPolygon((Polygon) geometry),
+                        polygonOptions));
                 break;
             case MULTIPOINT:
                 shape = new OsmDroidMapShape(geometryType,
-                    OsmMapShapeType.MULTI_MARKER, addLatLngsToMap(map,
-                    toLatLngs((MultiPoint) geometry)));
+                        OsmMapShapeType.MULTI_MARKER, addLatLngsToMap(map,
+                        toLatLngs((MultiPoint) geometry)));
                 break;
             case MULTILINESTRING:
                 shape = new OsmDroidMapShape(geometryType,
-                    OsmMapShapeType.MULTI_POLYLINE, addPolylinesToMap(map,
-                    toPolylines((MultiLineString) geometry)));
+                        OsmMapShapeType.MULTI_POLYLINE, addPolylinesToMap(map,
+                        toPolylines((MultiLineString) geometry)));
                 break;
             case MULTIPOLYGON:
                 shape = new OsmDroidMapShape(geometryType,
-                    OsmMapShapeType.MULTI_POLYGON, addPolygonsToMap(map,
-                    toPolygons((MultiPolygon) geometry),polygonOptions));
+                        OsmMapShapeType.MULTI_POLYGON, addPolygonsToMap(map,
+                        toPolygons((MultiPolygon) geometry), polygonOptions));
                 break;
             case CIRCULARSTRING:
                 shape = new OsmDroidMapShape(geometryType,
-                    OsmMapShapeType.POLYLINE, addPolylineToMap(map,
-                    toPolyline((CircularString) geometry)));
+                        OsmMapShapeType.POLYLINE, addPolylineToMap(map,
+                        toPolyline((CircularString) geometry)));
                 break;
             case COMPOUNDCURVE:
                 shape = new OsmDroidMapShape(geometryType,
-                    OsmMapShapeType.MULTI_POLYLINE, addPolylinesToMap(map,
-                    toPolylines((CompoundCurve) geometry)));
+                        OsmMapShapeType.MULTI_POLYLINE, addPolylinesToMap(map,
+                        toPolylines((CompoundCurve) geometry)));
                 break;
             case CURVEPOLYGON:
 
                 org.osmdroid.views.overlay.Polygon polygon = toCurvePolygon((CurvePolygon) geometry);
                 shape = new OsmDroidMapShape(geometryType,
-                    OsmMapShapeType.POLYGON, addPolygonToMap(map,
-                    polygon, polygonOptions));
+                        OsmMapShapeType.POLYGON, addPolygonToMap(map,
+                        polygon, polygonOptions));
                 break;
             case POLYHEDRALSURFACE:
                 shape = new OsmDroidMapShape(geometryType,
-                    OsmMapShapeType.MULTI_POLYGON, addPolygonsToMap(map,
-                    toPolygons((PolyhedralSurface) geometry),polygonOptions));
+                        OsmMapShapeType.MULTI_POLYGON, addPolygonsToMap(map,
+                        toPolygons((PolyhedralSurface) geometry), polygonOptions));
                 break;
             case TIN:
                 shape = new OsmDroidMapShape(geometryType,
-                    OsmMapShapeType.MULTI_POLYGON, addPolygonsToMap(map,
-                    toPolygons((TIN) geometry),polygonOptions));
+                        OsmMapShapeType.MULTI_POLYGON, addPolygonsToMap(map,
+                        toPolygons((TIN) geometry), polygonOptions));
                 break;
             case TRIANGLE:
                 shape = new OsmDroidMapShape(geometryType,
-                    OsmMapShapeType.POLYGON, addPolygonToMap(map,
-                    toPolygon((Triangle) geometry), polygonOptions));
+                        OsmMapShapeType.POLYGON, addPolygonToMap(map,
+                        toPolygon((Triangle) geometry), polygonOptions));
                 break;
             case GEOMETRYCOLLECTION:
                 shape = new OsmDroidMapShape(geometryType,
-                    OsmMapShapeType.COLLECTION, addToMap(map,
-                    (GeometryCollection<Geometry>) geometry));
+                        OsmMapShapeType.COLLECTION, addToMap(map,
+                        (GeometryCollection<Geometry>) geometry));
                 break;
             default:
                 throw new GeoPackageException("Unsupported Geometry Type: "
-                    + geometryType.getName());
+                        + geometryType.getName());
         }
 
         return shape;
@@ -687,8 +684,8 @@ public class OsmMapShapeConverter {
                                         MarkerOptions options) {
         Marker m = new Marker(map);
         m.setPosition(latLng);
-        if (options!=null) {
-            if (options.getIcon()!=null){
+        if (options != null) {
+            if (options.getIcon() != null) {
                 m.setIcon(options.getIcon());
             }
             m.setAlpha(options.getAlpha());
@@ -709,7 +706,7 @@ public class OsmMapShapeConverter {
      */
     public static Polyline addPolylineToMap(MapView map,
                                             Polyline polyline) {
-        if (polyline.getInfoWindow()==null)
+        if (polyline.getInfoWindow() == null)
             polyline.setInfoWindow(new BasicInfoWindow(R.layout.bonuspack_bubble, map));
         map.getOverlayManager().add(polyline);
         return polyline;
@@ -723,17 +720,17 @@ public class OsmMapShapeConverter {
      * @return
      */
     public static org.osmdroid.views.overlay.Polygon addPolygonToMap(
-        MapView map,
-        List<GeoPoint> pts,
-        List<List<GeoPoint>> holes, PolygonOptions options) {
-        org.osmdroid.views.overlay.Polygon polygon1 = new org.osmdroid.views.overlay.Polygon();
+            MapView map,
+            List<GeoPoint> pts,
+            List<List<GeoPoint>> holes, PolygonOptions options) {
+        org.osmdroid.views.overlay.Polygon polygon1 = new org.osmdroid.views.overlay.Polygon(map);
         polygon1.setPoints(pts);
         polygon1.getHoles().addAll(holes);
-        if (options!=null) {
-            polygon1.setFillColor(options.getFillColor());
+        if (options != null) {
+            polygon1.getFillPaint().setColor(options.getFillColor());
             polygon1.setTitle(options.getTitle());
-            polygon1.setStrokeColor(options.getStrokeColor());
-            polygon1.setStrokeWidth(options.getStrokeWidth());
+            polygon1.getOutlinePaint().setColor(options.getStrokeColor());
+            polygon1.getOutlinePaint().setStrokeWidth(options.getStrokeWidth());
             polygon1.setSubDescription(options.getSubtitle());
             polygon1.setInfoWindow(new BasicInfoWindow(R.layout.bonuspack_bubble, map));
 
@@ -753,14 +750,14 @@ public class OsmMapShapeConverter {
      * @return
      */
     public static org.osmdroid.views.overlay.Polygon addPolygonToMap(
-        MapView map,
-        org.osmdroid.views.overlay.Polygon polygon, PolygonOptions options) {
+            MapView map,
+            org.osmdroid.views.overlay.Polygon polygon, PolygonOptions options) {
 
-        if (options!=null) {
-            polygon.setFillColor(options.getFillColor());
+        if (options != null) {
+            polygon.getFillPaint().setColor(options.getFillColor());
             polygon.setTitle(options.getTitle());
-            polygon.setStrokeColor(options.getStrokeColor());
-            polygon.setStrokeWidth(options.getStrokeWidth());
+            polygon.getOutlinePaint().setColor(options.getStrokeColor());
+            polygon.getOutlinePaint().setStrokeWidth(options.getStrokeWidth());
             polygon.setSubDescription(options.getSubtitle());
             polygon.setInfoWindow(new BasicInfoWindow(R.layout.bonuspack_bubble, map));
 
@@ -800,8 +797,8 @@ public class OsmMapShapeConverter {
         MultiPolyline multiPolyline = new MultiPolyline();
 
         for (Polyline line : polylines) {
-            if (line.getInfoWindow()==null)
-            line.setInfoWindow(new BasicInfoWindow(R.layout.bonuspack_bubble, map));
+            if (line.getInfoWindow() == null)
+                line.setInfoWindow(new BasicInfoWindow(R.layout.bonuspack_bubble, map));
             map.getOverlayManager().add(line);
             multiPolyline.add(line);
         }
@@ -809,13 +806,13 @@ public class OsmMapShapeConverter {
     }
 
 
-    public static  org.osmdroid.gpkg.overlay.features.MultiPolygon  addPolygonsToMap(
-        MapView map, List<org.osmdroid.views.overlay.Polygon>  polygons, PolygonOptions opts) {
+    public static org.osmdroid.gpkg.overlay.features.MultiPolygon addPolygonsToMap(
+            MapView map, List<org.osmdroid.views.overlay.Polygon> polygons, PolygonOptions opts) {
         org.osmdroid.gpkg.overlay.features.MultiPolygon multiPolygon = new org.osmdroid.gpkg.overlay.features.MultiPolygon();
         for (org.osmdroid.views.overlay.Polygon polygonOption : polygons) {
-            org.osmdroid.views.overlay.Polygon polygon = addPolygonToMap(map,polygonOption.getPoints(), polygonOption.getHoles(), opts);
+            org.osmdroid.views.overlay.Polygon polygon = addPolygonToMap(map, polygonOption.getActualPoints(), polygonOption.getHoles(), opts);
 
-            if (polygon.getInfoWindow()==null)
+            if (polygon.getInfoWindow() == null)
                 polygon.setInfoWindow(new BasicInfoWindow(R.layout.bonuspack_bubble, map));
             multiPolygon.add(polygon);
         }
@@ -831,7 +828,7 @@ public class OsmMapShapeConverter {
      * @return
      */
     public List<OsmDroidMapShape> addToMap(MapView map,
-                                         GeometryCollection<Geometry> geometryCollection) {
+                                           GeometryCollection<Geometry> geometryCollection) {
 
         List<OsmDroidMapShape> shapes = new ArrayList<OsmDroidMapShape>();
 
@@ -842,8 +839,6 @@ public class OsmMapShapeConverter {
 
         return shapes;
     }
-
-
 
 
 }

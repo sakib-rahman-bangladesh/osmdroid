@@ -10,8 +10,6 @@ import android.widget.EditText;
 
 import org.osmdroid.R;
 import org.osmdroid.samplefragments.data.SampleGridlines;
-import org.osmdroid.util.BoundingBox;
-import org.osmdroid.util.GeoPoint;
 import org.osmdroid.wms.WMSEndpoint;
 import org.osmdroid.wms.WMSLayer;
 import org.osmdroid.wms.WMSParser;
@@ -140,11 +138,11 @@ public class SampleWMSSource extends SampleGridlines {
                 alertDialog.setTitle("Error");
                 alertDialog.setMessage("There was an error communicating with the server: \n" + root.getMessage());
                 alertDialog.setButton(AlertDialog.BUTTON_NEUTRAL, "OK",
-                    new DialogInterface.OnClickListener() {
-                        public void onClick(DialogInterface dialog, int which) {
-                            dialog.dismiss();
-                        }
-                    });
+                        new DialogInterface.OnClickListener() {
+                            public void onClick(DialogInterface dialog, int which) {
+                                dialog.dismiss();
+                            }
+                        });
                 alertDialog.show();
             }
         });
@@ -185,9 +183,9 @@ public class SampleWMSSource extends SampleGridlines {
                                         //double centerLon = (Double.parseDouble(layer.getBbox().getMaxx()) + Double.parseDouble(layer.getBbox().getMinx())) / 2;
                                         //mMapView.getController().animateTo(new GeoPoint(centerLat, centerLon));
 
-                                        mMapView.zoomToBoundingBox(layer.getBbox(),true);
-                                        mMapView.zoomToBoundingBox(layer.getBbox(),true);
-                                        mMapView.zoomToBoundingBox(layer.getBbox(),true);
+                                        mMapView.zoomToBoundingBox(layer.getBbox(), true);
+                                        mMapView.zoomToBoundingBox(layer.getBbox(), true);
+                                        mMapView.zoomToBoundingBox(layer.getBbox(), true);
 
                                     } catch (java.lang.Exception ex) {
                                         ex.printStackTrace();
@@ -209,15 +207,15 @@ public class SampleWMSSource extends SampleGridlines {
     }
 
     @Override
-    public void onPause(){
+    public void onPause() {
         super.onPause();
-        if (alertDialog!=null && alertDialog.isShowing()){
+        if (alertDialog != null && alertDialog.isShowing()) {
             alertDialog.dismiss();
         }
-        if (show!=null && show.isShowing()){
+        if (show != null && show.isShowing()) {
             show.dismiss();
         }
-        if (layerPicker!=null && layerPicker.isShowing()){
+        if (layerPicker != null && layerPicker.isShowing()) {
             layerPicker.dismiss();
         }
     }

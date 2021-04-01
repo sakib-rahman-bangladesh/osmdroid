@@ -33,12 +33,10 @@ import org.osmdroid.tileprovider.modules.MapTileAssetsProvider;
 import org.osmdroid.tileprovider.modules.MapTileFileArchiveProvider;
 import org.osmdroid.tileprovider.modules.MapTileModuleProviderBase;
 import org.osmdroid.tileprovider.modules.SqlTileWriter;
-import org.osmdroid.tileprovider.modules.TileWriter;
 import org.osmdroid.tileprovider.tilesource.FileBasedTileSource;
 import org.osmdroid.tileprovider.tilesource.ITileSource;
 import org.osmdroid.tileprovider.tilesource.TileSourceFactory;
 import org.osmdroid.tileprovider.util.SimpleRegisterReceiver;
-import org.osmdroid.views.MapView;
 
 import java.io.File;
 import java.util.ArrayList;
@@ -74,12 +72,12 @@ public class OfflinePickerSample extends BaseSampleFragment implements View.OnCl
 
         View root = inflater.inflate(R.layout.sample_map_two_button, container, false);
 
-        mMapView = (MapView) root.findViewById(R.id.mapview);
-        btnArchives = (Button) root.findViewById(R.id.button1);
+        mMapView = root.findViewById(R.id.mapview);
+        btnArchives = root.findViewById(R.id.button1);
         btnArchives.setOnClickListener(this);
         btnArchives.setText("Pick Files");
 
-        btnSource = (Button) root.findViewById(R.id.button2);
+        btnSource = root.findViewById(R.id.button2);
         btnSource.setOnClickListener(this);
         btnSource.setText("Pick Tile Source");
         return root;
@@ -91,6 +89,13 @@ public class OfflinePickerSample extends BaseSampleFragment implements View.OnCl
         this.mMapView.setUseDataConnection(true);
     }
 
+    @Override
+    public void onDestroy() {
+        super.onDestroy();
+        if (tileWriter != null)
+            tileWriter.onDetach();
+    }
+
     /**
      * step 1, users selects files
      */
@@ -99,7 +104,6 @@ public class OfflinePickerSample extends BaseSampleFragment implements View.OnCl
         properties.selection_mode = DialogConfigs.MULTI_MODE;
         properties.selection_type = DialogConfigs.FILE_SELECT;
         properties.root = new File(DialogConfigs.DEFAULT_DIR);
-        ;//(Configuration.getInstance().getOsmdroidBasePath());
         properties.error_dir = new File(DialogConfigs.DEFAULT_DIR);
         properties.offset = new File(DialogConfigs.DEFAULT_DIR);
 
@@ -107,9 +111,7 @@ public class OfflinePickerSample extends BaseSampleFragment implements View.OnCl
         //api check
         if (Build.VERSION.SDK_INT >= 14)
             registeredExtensions.add("gpkg");
-        if (Build.VERSION.SDK_INT >= 10)
-            registeredExtensions.add("map");
-
+        registeredExtensions.add("map");
 
         String[] ret = new String[registeredExtensions.size()];
         ret = registeredExtensions.toArray(ret);
@@ -128,23 +130,21 @@ public class OfflinePickerSample extends BaseSampleFragment implements View.OnCl
         dialog.show();
     }
 
+    IFilesystemCache tileWriter = null;
 
     /**
      * step two, configure our offline tile provider
+     *
      * @param files
      */
     private void setProviderConfig(String[] files) {
         if (files == null || files.length == 0)
             return;
         SimpleRegisterReceiver simpleRegisterReceiver = new SimpleRegisterReceiver(getContext());
+        if (tileWriter != null)
+            tileWriter.onDetach();
 
-        IFilesystemCache tileWriter;
-
-        if (Build.VERSION.SDK_INT < 10) {
-            tileWriter = new TileWriter();
-        } else {
-            tileWriter = new SqlTileWriter();
-        }
+        tileWriter = new SqlTileWriter();
 
         tileSources.clear();
         List<MapTileModuleProviderBase> providers = new ArrayList<>();
@@ -188,29 +188,27 @@ public class OfflinePickerSample extends BaseSampleFragment implements View.OnCl
             File[] maps = new File[geopackages.size()];
             maps = geopackages.toArray(maps);
 
-            if (Build.VERSION.SDK_INT > 10) {
-                GeoPackageManager manager = GeoPackageFactory.getManager(getContext());
+            GeoPackageManager manager = GeoPackageFactory.getManager(getContext());
 
-                // Import database
-                for (File f : maps) {
-                    try {
-                        boolean imported = manager.importGeoPackage(f);
-                    } catch (Exception ex) {
-                        ex.printStackTrace();
-                    }
+            // Import database
+            for (File f : maps) {
+                try {
+                    boolean imported = manager.importGeoPackage(f);
+                } catch (Exception ex) {
+                    ex.printStackTrace();
                 }
-
-                provider = new GeoPackageProvider(maps, getContext());
-                geopackage = provider.geoPackageMapTileModuleProvider();
-                providers.add(geopackage);
-                List<GeopackageRasterTileSource> geotileSources = new ArrayList<>();
-                geotileSources.addAll( geopackage.getTileSources());
-                tileSources.addAll(geotileSources);
-                //TODO add feature tiles here too
             }
+
+            provider = new GeoPackageProvider(maps, getContext());
+            geopackage = provider.geoPackageMapTileModuleProvider();
+            providers.add(geopackage);
+            List<GeopackageRasterTileSource> geotileSources = new ArrayList<>();
+            geotileSources.addAll(geopackage.getTileSources());
+            tileSources.addAll(geotileSources);
+            //TODO add feature tiles here too
         }
 
-        MapsForgeTileModuleProvider moduleProvider=null;
+        MapsForgeTileModuleProvider moduleProvider = null;
         if (!forgeMaps.isEmpty()) {
             //fire up the forge maps...
             XmlRenderTheme theme = null;
@@ -239,7 +237,7 @@ public class OfflinePickerSample extends BaseSampleFragment implements View.OnCl
             providers.add(geopackage);
             approximationProvider.addProvider(geopackage);
         }
-        if (moduleProvider!=null) {
+        if (moduleProvider != null) {
             providers.add(moduleProvider);
             approximationProvider.addProvider(moduleProvider);
         }
@@ -291,13 +289,33 @@ public class OfflinePickerSample extends BaseSampleFragment implements View.OnCl
                         mMapView.setTileSource(strName);//new XYTileSource(strName, 0, 22, 256, "png", new String[0]));
                         //on tile sources that are supported, center the map an area that's within bounds
                         if (strName instanceof MapsForgeTileSource) {
-                            MapsForgeTileSource src = (MapsForgeTileSource) strName;
-                            mMapView.getController().setZoom(src.getMinimumZoomLevel());
-                            mMapView.zoomToBoundingBox(src.getBoundsOsmdroid(), true);
+                            final MapsForgeTileSource src = (MapsForgeTileSource) strName;
+                            mMapView.post(new Runnable() {
+                                @Override
+                                public void run() {
+                                    mMapView.getController().setZoom(src.getMinimumZoomLevel());
+                                    mMapView.setMinZoomLevel((double) src.getMinimumZoomLevel());
+                                    mMapView.setMaxZoomLevel((double) src.getMaximumZoomLevel());
+
+                                    mMapView.invalidate();
+                                    mMapView.zoomToBoundingBox(src.getBoundsOsmdroid(), true);
+
+                                }
+                            });
+
+
                         } else if (strName instanceof GeopackageRasterTileSource) {
-                            GeopackageRasterTileSource src = (GeopackageRasterTileSource) strName;
-                            mMapView.zoomToBoundingBox(src.getBounds(), true);
-                            mMapView.getController().setZoom(src.getMinimumZoomLevel());
+                            final GeopackageRasterTileSource src = (GeopackageRasterTileSource) strName;
+                            mMapView.post(new Runnable() {
+                                @Override
+                                public void run() {
+                                    mMapView.getController().setZoom(src.getMinimumZoomLevel());
+                                    mMapView.setMinZoomLevel((double) src.getMinimumZoomLevel());
+                                    mMapView.setMaxZoomLevel((double) src.getMaximumZoomLevel());
+                                    mMapView.invalidate();
+                                    mMapView.zoomToBoundingBox(src.getBounds(), true);
+                                }
+                            });
                         }
 
                         dialog.dismiss();

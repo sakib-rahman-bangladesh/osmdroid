@@ -4,7 +4,6 @@ package org.osmdroid.config;
 import android.content.Context;
 import android.content.SharedPreferences;
 
-import org.osmdroid.tileprovider.LRUMapTileCache;
 import org.osmdroid.tileprovider.MapTileCache;
 import org.osmdroid.tileprovider.MapTileProviderBase;
 
@@ -51,7 +50,6 @@ public interface IConfigurationProvider {
 
     /**
      * Typically used to enable additional debugging
-     * from {@link org.osmdroid.views.util.constants.MapViewConstants}
      *
      * @return
      */
@@ -82,7 +80,7 @@ public interface IConfigurationProvider {
 
     /**
      * must be set before the mapview is created or inflated from a layout.
-     * If you're only using single point icons, then youc an probably get away with setting this to true
+     * If you're only using single point icons, then you can probably get away with setting this to true
      * otherwise (using polylines, paths, polygons) set it to false.
      * <p>
      * default is false
@@ -90,7 +88,6 @@ public interface IConfigurationProvider {
      * @param mapViewHardwareAccelerated
      * @see org.osmdroid.views.overlay.Polygon
      * @see org.osmdroid.views.overlay.Polyline
-     * @see org.osmdroid.views.drawing.OsmPath
      */
     void setMapViewHardwareAccelerated(boolean mapViewHardwareAccelerated);
 
@@ -124,7 +121,7 @@ public interface IConfigurationProvider {
 
     /**
      * Initial tile cache size (in memory). The size will be increased as required by calling
-     * {@link LRUMapTileCache#ensureCapacity(int)} The tile cache will always be at least 3x3.
+     * {@link MapTileCache#ensureCapacity(int)} The tile cache will always be at least 3x3.
      * from {@link org.osmdroid.tileprovider.constants.OpenStreetMapTileProviderConstants}
      * used by MapTileCache
      *
@@ -133,6 +130,15 @@ public interface IConfigurationProvider {
      */
     short getCacheMapTileCount();
 
+    /**
+     * Initial tile cache size (in memory). The size will be increased as required by calling
+     * {@link MapTileCache#ensureCapacity(int)} The tile cache will always be at least 3x3.
+     * from {@link org.osmdroid.tileprovider.constants.OpenStreetMapTileProviderConstants}
+     * used by MapTileCache
+     *
+     * @param cacheMapTileCount
+     * @see MapTileCache
+     */
     void setCacheMapTileCount(short cacheMapTileCount);
 
     /**
@@ -193,10 +199,26 @@ public interface IConfigurationProvider {
     /**
      * Base path for osmdroid files. Zip/sqlite/mbtiles/etc files are in this folder.
      * Note: also used for offline tile sources
+     * <p>
+     * If no directory has been set before with {@link #setOsmdroidBasePath(File)} it tries
+     * to automatically detect one. On API>29 and for better results use
+     * {@link #getOsmdroidBasePath(Context)}
      *
      * @return
      */
     File getOsmdroidBasePath();
+
+    /**
+     * Base path for osmdroid files. Zip/sqlite/mbtiles/etc files are in this folder.
+     * Note: also used for offline tile sources
+     * <p>
+     * If no directory has been set before with {@link #setOsmdroidBasePath(File)} it tries
+     * to automatically detect one. Passing a context gives better results than
+     * {@link #getOsmdroidBasePath()} and is required to find any location on API29.
+     *
+     * @return
+     */
+    File getOsmdroidBasePath(Context context);
 
     /**
      * Base path for osmdroid files. Zip/sqlite/mbtiles/etc files are in this folder.
@@ -212,17 +234,40 @@ public interface IConfigurationProvider {
     /**
      * by default, maps to getOsmdroidBasePath() + "/tiles"
      * By default, it is defined in SD card, osmdroid directory.
-     * Sets the location where the tile cache is stored. Changes are only in effect when the @{link {@link org.osmdroid.views.MapView}}
+     * Sets the location where the tile cache is stored. Changes are only in effect when the {@link {@link org.osmdroid.views.MapView}}
      * is created. Changes made after it's creation (either pogrammatic or via layout inflator) have
      * no effect until the map is restarted or the {@link org.osmdroid.views.MapView#setTileProvider(MapTileProviderBase)}
      * is changed or recreated.
      * <p>
      * Note: basePath and tileCache directories can be changed independently
      * This has no effect on offline archives and can be changed independently
+     * <p>
+     * If no directory has been set before with {@link #setOsmdroidTileCache(File)} it tries
+     * to automatically detect one. On API>29 and for better results use
+     * {@link #getOsmdroidTileCache(Context)}
      *
      * @return
      */
     File getOsmdroidTileCache();
+
+    /**
+     * by default, maps to getOsmdroidBasePath() + "/tiles"
+     * By default, it is defined in SD card, osmdroid directory.
+     * Sets the location where the tile cache is stored. Changes are only in effect when the {@link org.osmdroid.views.MapView}}
+     * is created. Changes made after it's creation (either pogrammatic or via layout inflator) have
+     * no effect until the map is restarted or the {@link org.osmdroid.views.MapView#setTileProvider(MapTileProviderBase)}
+     * is changed or recreated.
+     * <p>
+     * Note: basePath and tileCache directories can be changed independently
+     * This has no effect on offline archives and can be changed independently
+     * <p>
+     * If no directory has been set before with {@link #setOsmdroidTileCache(File)} it tries
+     * to automatically detect one. Passing a context gives better results than
+     * {@link #getOsmdroidTileCache()} and is required to find any location on API29.
+     *
+     * @return
+     */
+    File getOsmdroidTileCache(Context context);
 
     /**
      * by default, maps to getOsmdroidBasePath() + "/tiles"
@@ -358,15 +403,86 @@ public interface IConfigurationProvider {
     /**
      * If true, the map view will set .setHasTransientState(true) for API 16+ devices.
      * This is now the default setting. Set to false if this is causing you issues
-     * @since 6.0.0
+     *
      * @return
+     * @since 6.0.0
      */
     boolean isMapViewRecyclerFriendly();
+
     /**
      * If true, the map view will set .setHasTransientState(true) for API 16+ devices.
      * This is now the default setting. Set to false if this is causing you issues
-     * @since 6.0.0
+     *
      * @return
+     * @since 6.0.0
      */
     void setMapViewRecyclerFriendly(boolean enabled);
+
+    /**
+     * In memory tile count, used by the tiles overlay
+     *
+     * @param value
+     * @see org.osmdroid.views.overlay.TilesOverlay
+     * @since 6.0.0
+     */
+    void setCacheMapTileOvershoot(short value);
+
+    /**
+     * In memory tile count, used by the tiles overlay
+     *
+     * @return
+     * @since 6.0.0
+     */
+    short getCacheMapTileOvershoot();
+
+    /**
+     * Delay between tile garbage collection calls
+     *
+     * @since 6.0.2
+     */
+    long getTileGCFrequencyInMillis();
+
+    /**
+     * @since 6.0.2
+     */
+    void setTileGCFrequencyInMillis(final long pMillis);
+
+    /**
+     * Tile garbage collection bulk size
+     *
+     * @since 6.0.2
+     */
+    int getTileGCBulkSize();
+
+    /**
+     * @since 6.0.2
+     */
+    void setTileGCBulkSize(final int pSize);
+
+    /**
+     * Pause during tile garbage collection bulk deletions
+     *
+     * @since 6.0.2
+     */
+    long getTileGCBulkPauseInMillis();
+
+    /**
+     * @since 6.0.2
+     */
+    void setTileGCBulkPauseInMillis(final long pMillis);
+
+    /**
+     * enables/disables tile downloading following redirects. default is true
+     *
+     * @param value
+     * @since 6.0.2
+     */
+    void setMapTileDownloaderFollowRedirects(boolean value);
+
+    boolean isMapTileDownloaderFollowRedirects();
+
+    /**
+     * @since 6.1.0
+     */
+    String getNormalizedUserAgent();
 }

@@ -3,6 +3,7 @@ package org.osmdroid.wms;
 import android.util.Log;
 
 import org.osmdroid.util.BoundingBox;
+import org.osmdroid.util.TileSystem;
 import org.w3c.dom.Element;
 import org.w3c.dom.Node;
 
@@ -104,38 +105,38 @@ public class DomParserWms111 {
                     Node e3 = e.getChildNodes().item(i2);
                     String name3 = e3.getNodeName();
 
-                            if (name3.contains("DCPType")) {
-                                for (int i4 = 0; i4 < e3.getChildNodes().getLength(); i4++) {
-                                    Node e4 = e3.getChildNodes().item(i4);
-                                    String name4 = e4.getNodeName();
-                                    if (name4.contains("HTTP")) {
-                                        for (int i5 = 0; i5 < e4.getChildNodes().getLength(); i5++) {
-                                            Node e5 = e4.getChildNodes().item(i5);
-                                            String name5 = e5.getNodeName();
-                                            if (name5.contains("Get")) {
-                                                for (int i6 = 0; i6 < e5.getChildNodes().getLength(); i6++) {
-                                                    Node e6 = e5.getChildNodes().item(i6);
-                                                    String name6 = e6.getNodeName();
-                                                    if (name6.contains("OnlineResource")) {
-                                                        Node href = e6.getAttributes().getNamedItem("href");
-                                                        Node href2 = e6.getAttributes().getNamedItem("xlink:href");
-                                                        Node href3 = e6.getAttributes().getNamedItemNS("http://www.w3.org/1999/xlink", "href");
+                    if (name3.contains("DCPType")) {
+                        for (int i4 = 0; i4 < e3.getChildNodes().getLength(); i4++) {
+                            Node e4 = e3.getChildNodes().item(i4);
+                            String name4 = e4.getNodeName();
+                            if (name4.contains("HTTP")) {
+                                for (int i5 = 0; i5 < e4.getChildNodes().getLength(); i5++) {
+                                    Node e5 = e4.getChildNodes().item(i5);
+                                    String name5 = e5.getNodeName();
+                                    if (name5.contains("Get")) {
+                                        for (int i6 = 0; i6 < e5.getChildNodes().getLength(); i6++) {
+                                            Node e6 = e5.getChildNodes().item(i6);
+                                            String name6 = e6.getNodeName();
+                                            if (name6.contains("OnlineResource")) {
+                                                Node href = e6.getAttributes().getNamedItem("href");
+                                                Node href2 = e6.getAttributes().getNamedItem("xlink:href");
+                                                Node href3 = e6.getAttributes().getNamedItemNS("http://www.w3.org/1999/xlink", "href");
 
-                                                        if (href!=null) {
-                                                            rets.setBaseurl(href.getNodeValue());
-                                                        } else if (href2!=null) {
-                                                            rets.setBaseurl(href2.getNodeValue());
-                                                        } else if (href3!=null) {
-                                                            rets.setBaseurl(href3.getNodeValue());
-                                                        }
-
-                                                    }
+                                                if (href != null) {
+                                                    rets.setBaseurl(href.getNodeValue());
+                                                } else if (href2 != null) {
+                                                    rets.setBaseurl(href2.getNodeValue());
+                                                } else if (href3 != null) {
+                                                    rets.setBaseurl(href3.getNodeValue());
                                                 }
 
                                             }
                                         }
+
                                     }
                                 }
+                            }
+                        }
 
 
                     }
@@ -153,6 +154,7 @@ public class DomParserWms111 {
 
     //e is "Layer"
     private static Collection<? extends WMSLayer> parseLayers(Node element) {
+        final TileSystem tileSystem = org.osmdroid.views.MapView.getTileSystem();
         List<WMSLayer> rets = new ArrayList<>();
         WMSLayer ret = new WMSLayer();
 
@@ -176,7 +178,12 @@ public class DomParserWms111 {
             } else if (name.contains("LatLonBoundingBox")) {
                 //TODO need some handling for crs here
                 south = (Double.parseDouble(e.getAttributes().getNamedItem("miny").getNodeValue()));
+                if (south < tileSystem.getMinLatitude())
+                    south = tileSystem.getMinLatitude();
                 north = (Double.parseDouble(e.getAttributes().getNamedItem("maxy").getNodeValue()));
+
+                if (north > tileSystem.getMaxLatitude())
+                    north = tileSystem.getMaxLatitude();
                 west = (Double.parseDouble(e.getAttributes().getNamedItem("maxx").getNodeValue()));
                 east = (Double.parseDouble(e.getAttributes().getNamedItem("minx").getNodeValue()));
                 ret.setBbox(new BoundingBox(north, east, south, west));
@@ -245,7 +252,6 @@ public class DomParserWms111 {
         rets.add(ret);
         return rets;
     }
-
 
 
     private static WMSEndpoint extractService(Node element, WMSEndpoint ret) {

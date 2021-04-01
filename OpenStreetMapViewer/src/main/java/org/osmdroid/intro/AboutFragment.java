@@ -7,7 +7,6 @@ import android.support.v4.app.Fragment;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-import android.webkit.WebView;
 
 import org.osmdroid.R;
 
@@ -24,7 +23,7 @@ public class AboutFragment extends Fragment implements View.OnClickListener {
 
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
-        View v = inflater.inflate(R.layout.intro_about,container,false);
+        View v = inflater.inflate(R.layout.intro_about, container, false);
         v.findViewById(R.id.introbuttonsite).setOnClickListener(this);
         return v;
     }

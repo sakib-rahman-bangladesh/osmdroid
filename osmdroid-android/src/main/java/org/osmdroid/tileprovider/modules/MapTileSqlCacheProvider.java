@@ -1,34 +1,28 @@
 package org.osmdroid.tileprovider.modules;
 
-import android.database.Cursor;
 import android.graphics.drawable.Drawable;
 import android.util.Log;
 
 import org.osmdroid.api.IMapView;
 import org.osmdroid.config.Configuration;
-import org.osmdroid.tileprovider.ExpirableBitmapDrawable;
 import org.osmdroid.tileprovider.IRegisterReceiver;
-import org.osmdroid.tileprovider.MapTile;
 import org.osmdroid.tileprovider.MapTileProviderBase;
-import org.osmdroid.tileprovider.MapTileRequestState;
 import org.osmdroid.tileprovider.constants.OpenStreetMapTileProviderConstants;
 import org.osmdroid.tileprovider.tilesource.BitmapTileSourceBase;
 import org.osmdroid.tileprovider.tilesource.ITileSource;
 import org.osmdroid.tileprovider.util.Counters;
-import org.osmdroid.tileprovider.util.StreamUtils;
+import org.osmdroid.util.MapTileIndex;
 
-import java.io.ByteArrayInputStream;
-import java.io.InputStream;
 import java.util.concurrent.atomic.AtomicReference;
 
 /**
  * Sqlite based tile cache mechansism
  *
- * @since 5.1
  * @see SqlTileWriter
  * Created by alex on 1/16/16.
+ * @since 5.1
  */
-public class MapTileSqlCacheProvider  extends MapTileFileStorageProviderBase{
+public class MapTileSqlCacheProvider extends MapTileFileStorageProviderBase {
     // ===========================================================
     // Constants
     // ===========================================================
@@ -48,7 +42,7 @@ public class MapTileSqlCacheProvider  extends MapTileFileStorageProviderBase{
 
     @Deprecated
     public MapTileSqlCacheProvider(final IRegisterReceiver pRegisterReceiver,
-                                      final ITileSource pTileSource, final long pMaximumCachedFileAge) {
+                                   final ITileSource pTileSource, final long pMaximumCachedFileAge) {
         this(pRegisterReceiver, pTileSource);
     }
 
@@ -57,7 +51,7 @@ public class MapTileSqlCacheProvider  extends MapTileFileStorageProviderBase{
      * It and its friends are typically created and controlled by {@link MapTileProviderBase}.
      */
     public MapTileSqlCacheProvider(final IRegisterReceiver pRegisterReceiver,
-                                      final ITileSource pTileSource) {
+                                   final ITileSource pTileSource) {
         super(pRegisterReceiver,
                 Configuration.getInstance().getTileFileSystemThreads(),
                 Configuration.getInstance().getTileFileSystemMaxQueueSize());
@@ -104,7 +98,7 @@ public class MapTileSqlCacheProvider  extends MapTileFileStorageProviderBase{
     public int getMaximumZoomLevel() {
         ITileSource tileSource = mTileSource.get();
         return tileSource != null ? tileSource.getMaximumZoomLevel()
-                : microsoft.mappoint.TileSystem.getMaximumZoomLevel();
+                : org.osmdroid.util.TileSystem.getMaximumZoomLevel();
     }
 
     @Override
@@ -114,9 +108,9 @@ public class MapTileSqlCacheProvider  extends MapTileFileStorageProviderBase{
 
     @Override
     protected void onMediaUnmounted() {
-        if (mWriter!=null)
+        if (mWriter != null)
             mWriter.onDetach();
-        mWriter=new SqlTileWriter();
+        mWriter = new SqlTileWriter();
     }
 
     @Override
@@ -127,9 +121,9 @@ public class MapTileSqlCacheProvider  extends MapTileFileStorageProviderBase{
     @Override
     public void detach() {
 
-        if (mWriter!=null)
+        if (mWriter != null)
             mWriter.onDetach();
-        mWriter=null;
+        mWriter = null;
         super.detach();
     }
 
@@ -139,15 +133,13 @@ public class MapTileSqlCacheProvider  extends MapTileFileStorageProviderBase{
 
     /**
      * returns true if the given tile for the current map source exists in the cache db
-     * @param pTile
-     * @return
      */
-    public boolean hasTile(final MapTile pTile) {
+    public boolean hasTile(final long pMapTileIndex) {
         ITileSource tileSource = mTileSource.get();
         if (tileSource == null) {
             return false;
         }
-        return mWriter.getExpirationTimestamp(tileSource, pTile) != null;
+        return mWriter.getExpirationTimestamp(tileSource, pMapTileIndex) != null;
     }
 
 
@@ -159,24 +151,16 @@ public class MapTileSqlCacheProvider  extends MapTileFileStorageProviderBase{
     protected class TileLoader extends MapTileModuleProviderBase.TileLoader {
 
         @Override
-        public Drawable loadTile(final MapTile pTile) throws CantContinueException{
+        public Drawable loadTile(final long pMapTileIndex) throws CantContinueException {
 
             ITileSource tileSource = mTileSource.get();
             if (tileSource == null) {
                 return null;
             }
 
-            // if there's no sdcard then don't do anything
-            if (!isSdCardAvailable()) {
-                if (Configuration.getInstance().isDebugMode()) {
-                    Log.d(IMapView.LOGTAG,"No sdcard - do nothing for tile: " + pTile);
-                }
-                Counters.fileCacheMiss++;
-                return null;
-            }
-            if (mWriter!=null) {
+            if (mWriter != null) {
                 try {
-                    final Drawable result = mWriter.loadTile(tileSource, pTile);
+                    final Drawable result = mWriter.loadTile(tileSource, pMapTileIndex);
                     if (result == null) {
                         Counters.fileCacheMiss++;
                     } else {
@@ -185,9 +169,9 @@ public class MapTileSqlCacheProvider  extends MapTileFileStorageProviderBase{
                     return result;
                 } catch (final BitmapTileSourceBase.LowMemoryException e) {
                     // low memory so empty the queue
-                    Log.w(IMapView.LOGTAG, "LowMemoryException downloading MapTile: " + pTile + " : " + e);
+                    Log.w(IMapView.LOGTAG, "LowMemoryException downloading MapTile: " + MapTileIndex.toString(pMapTileIndex) + " : " + e);
                     Counters.fileCacheOOM++;
-                    throw new MapTileModuleProviderBase.CantContinueException(e);
+                    throw new CantContinueException(e);
                 } catch (final Throwable e) {
                     Log.e(IMapView.LOGTAG, "Error loading tile", e);
                     return null;

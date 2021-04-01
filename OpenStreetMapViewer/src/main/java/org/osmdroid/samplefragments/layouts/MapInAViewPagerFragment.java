@@ -9,8 +9,6 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 
-import junit.framework.Assert;
-
 import org.osmdroid.R;
 import org.osmdroid.samplefragments.BaseSampleFragment;
 import org.osmdroid.samplefragments.layouts.pager.MapSliderAdapter;
@@ -36,11 +34,12 @@ public class MapInAViewPagerFragment extends BaseSampleFragment {
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
         View v = inflater.inflate(R.layout.map_viewpager, null);
-        mPager = (ViewPager) v.findViewById(R.id.pager);
+        mPager = v.findViewById(R.id.pager);
         mPagerAdapter = new MapSliderAdapter(getActivity().getSupportFragmentManager());
         mPager.setAdapter(mPagerAdapter);
         return v;
     }
+
     @Override
     public void onActivityCreated(Bundle savedInstanceState) {
         super.onActivityCreated(savedInstanceState);
@@ -49,24 +48,29 @@ public class MapInAViewPagerFragment extends BaseSampleFragment {
     }
 
     @Override
-    public void onDestroyView(){
+    public void onDestroyView() {
         super.onDestroyView();
         Log.d(TAG, "onDetach");
 
     }
 
     @Override
-    public void onDestroy(){
+    public void onDestroy() {
         super.onDestroy();
         Log.d(TAG, "onDestroy");
 
     }
 
     @Override
-    public void runTestProcedures(){
+    public boolean skipOnCiTests() {
+        return true;
+    }
+
+    @Override
+    public void runTestProcedures() {
         Activity act = getActivity();
-        int count=0;
-        while (act==null && count < 10){
+        int count = 0;
+        while (act == null && count < 10) {
             count++;
             try {
                 Thread.sleep(100);
@@ -74,8 +78,8 @@ public class MapInAViewPagerFragment extends BaseSampleFragment {
 
             }
         }
-        if (act==null)
-            Assert.fail("fragment was never attached to an activity");
+        if (act == null)
+            throw new RuntimeException("fragment was never attached to an activity");
         getActivity().runOnUiThread(new Runnable() {
             @Override
             public void run() {

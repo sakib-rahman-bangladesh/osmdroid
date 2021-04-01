@@ -20,6 +20,7 @@ import java.io.File;
 import java.io.FileFilter;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -44,7 +45,7 @@ public class MapsforgeTileProviderSample extends BaseSampleFragment {
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setHasOptionsMenu(false);
+        setHasOptionsMenu(false);   //turn off the menu to prevent accidential tile source changes
         Log.d(TAG, "onCreate");
 
         /**
@@ -74,21 +75,21 @@ public class MapsforgeTileProviderSample extends BaseSampleFragment {
         if (maps == null || maps.length == 0) {
             //show a warning that no map files were found
             AlertDialog.Builder alertDialogBuilder = new AlertDialog.Builder(
-                getContext());
+                    getContext());
 
             // set title
             alertDialogBuilder.setTitle("No Mapsforge files found");
 
             // set dialog message
             alertDialogBuilder
-                .setMessage("In order to render map tiles, you'll need to either create or obtain mapsforge .map files. See https://github.com/mapsforge/mapsforge for more info. Store them in "
-                    + Configuration.getInstance().getOsmdroidBasePath().getAbsolutePath())
-                .setCancelable(false)
-                .setPositiveButton("Yes", new DialogInterface.OnClickListener() {
-                    public void onClick(DialogInterface dialog, int id) {
-                        if (alertDialog != null) alertDialog.dismiss();
-                    }
-                });
+                    .setMessage("In order to render map tiles, you'll need to either create or obtain mapsforge .map files. See https://github.com/mapsforge/mapsforge for more info. Store them in "
+                            + Configuration.getInstance().getOsmdroidBasePath().getAbsolutePath())
+                    .setCancelable(false)
+                    .setPositiveButton("Yes", new DialogInterface.OnClickListener() {
+                        public void onClick(DialogInterface dialog, int id) {
+                            if (alertDialog != null) alertDialog.dismiss();
+                        }
+                    });
 
 
             // create alert dialog
@@ -114,8 +115,8 @@ public class MapsforgeTileProviderSample extends BaseSampleFragment {
 
             fromFiles = MapsForgeTileSource.createFromFiles(maps, theme, "rendertheme-v4");
             forge = new MapsForgeTileProvider(
-                new SimpleRegisterReceiver(getContext()),
-                fromFiles, null);
+                    new SimpleRegisterReceiver(getContext()),
+                    fromFiles, null);
 
 
             mMapView.setTileProvider(forge);
@@ -130,13 +131,6 @@ public class MapsforgeTileProviderSample extends BaseSampleFragment {
         }
     }
 
-
-    @Override
-    public boolean skipOnCiTests() {
-        //FIXME temporary fix until we iron out what is leaking on this
-        return false;
-    }
-
     @Override
     public void onPause() {
         super.onPause();
@@ -148,10 +142,10 @@ public class MapsforgeTileProviderSample extends BaseSampleFragment {
     public void onDestroy() {
         super.onDestroy();
         if (alertDialog != null) {
-			alertDialog.hide();
-			alertDialog.dismiss();
-        	alertDialog = null;
-		}
+            alertDialog.hide();
+            alertDialog.dismiss();
+            alertDialog = null;
+        }
         if (fromFiles != null)
             fromFiles.dispose();
         if (forge != null)
@@ -164,9 +158,9 @@ public class MapsforgeTileProviderSample extends BaseSampleFragment {
      *
      * @return
      */
-    protected static Set<File> findMapFiles() {
+    protected Set<File> findMapFiles() {
         Set<File> maps = new HashSet<>();
-        List<StorageUtils.StorageInfo> storageList = StorageUtils.getStorageList();
+        List<StorageUtils.StorageInfo> storageList = StorageUtils.getStorageList(getActivity());
         for (int i = 0; i < storageList.size(); i++) {
             File f = new File(storageList.get(i).path + File.separator + "osmdroid" + File.separator);
             if (f.exists()) {
@@ -176,20 +170,16 @@ public class MapsforgeTileProviderSample extends BaseSampleFragment {
         return maps;
     }
 
-    static private Collection<? extends File> scan(File f) {
+    private Collection<? extends File> scan(File f) {
         List<File> ret = new ArrayList<>();
         File[] files = f.listFiles(new FileFilter() {
             @Override
             public boolean accept(File pathname) {
-                if (pathname.getName().toLowerCase().endsWith(".map"))
-                    return true;
-                return false;
+                return pathname.getName().toLowerCase().endsWith(".map");
             }
         });
         if (files != null) {
-            for (int i = 0; i < files.length; i++) {
-                ret.add(files[i]);
-            }
+            Collections.addAll(ret, files);
         }
         return ret;
     }

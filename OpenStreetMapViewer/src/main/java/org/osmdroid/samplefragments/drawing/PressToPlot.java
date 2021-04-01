@@ -1,6 +1,5 @@
 package org.osmdroid.samplefragments.drawing;
 
-import android.graphics.Color;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.LayoutInflater;
@@ -16,7 +15,6 @@ import org.osmdroid.events.MapListener;
 import org.osmdroid.events.ScrollEvent;
 import org.osmdroid.events.ZoomEvent;
 import org.osmdroid.samplefragments.BaseSampleFragment;
-import org.osmdroid.views.MapView;
 import org.osmdroid.views.overlay.gestures.RotationGestureOverlay;
 
 import static org.osmdroid.samplefragments.events.SampleMapEventListener.df;
@@ -24,12 +22,13 @@ import static org.osmdroid.samplefragments.events.SampleMapEventListener.df;
 /**
  * A simple sample to plot markers with a long press. It's a bit of noise this in the class
  * that is used to help the osmdroid devs troubleshoot things.
- *
+ * <p>
  * Map replication is ON for this sample (only viewable for numerically lower zoom levels (higher altitude))
- *
+ * <p>
  * created on 11/19/2017.
- * @since 6.0.0
+ *
  * @author Alex O'Ree
+ * @since 6.0.0
  */
 
 public class PressToPlot extends BaseSampleFragment implements View.OnClickListener, View.OnLongClickListener {
@@ -42,15 +41,16 @@ public class PressToPlot extends BaseSampleFragment implements View.OnClickListe
     public String getSampleTitle() {
         return "Long Press to Plot Marker";
     }
+
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
         View v = inflater.inflate(R.layout.layout_drawlines, null);
-        btnRotateLeft = (ImageButton) v.findViewById(R.id.btnRotateLeft);
-        btnRotateRight = (ImageButton) v.findViewById(R.id.btnRotateRight);
+        btnRotateLeft = v.findViewById(R.id.btnRotateLeft);
+        btnRotateRight = v.findViewById(R.id.btnRotateRight);
         btnRotateRight.setOnClickListener(this);
         btnRotateLeft.setOnClickListener(this);
-        textViewCurrentLocation = (TextView) v.findViewById(R.id.textViewCurrentLocation);
-        mMapView = (MapView) v.findViewById(org.osmdroid.R.id.mapview);
+        textViewCurrentLocation = v.findViewById(R.id.textViewCurrentLocation);
+        mMapView = v.findViewById(R.id.mapview);
         mMapView.setMapListener(new MapListener() {
             @Override
             public boolean onScroll(ScrollEvent event) {
@@ -73,10 +73,10 @@ public class PressToPlot extends BaseSampleFragment implements View.OnClickListe
         mMapView.setMultiTouchControls(true);
         mMapView.getOverlayManager().add(mRotationGestureOverlay);
         mMapView.setOnLongClickListener(this);
-        panning = (ImageButton) v.findViewById(R.id.enablePanning);
+        panning = v.findViewById(R.id.enablePanning);
         panning.setVisibility(View.GONE);
 
-        painting = (ImageButton) v.findViewById(R.id.enablePainting);
+        painting = v.findViewById(R.id.enablePainting);
         painting.setVisibility(View.GONE);
 
 
@@ -90,10 +90,11 @@ public class PressToPlot extends BaseSampleFragment implements View.OnClickListe
     private void updateInfo() {
         IGeoPoint mapCenter = mMapView.getMapCenter();
         textViewCurrentLocation.setText(df.format(mapCenter.getLatitude()) + "," +
-            df.format(mapCenter.getLongitude())
-            + ",zoom=" + mMapView.getZoomLevelDouble() + ",angle=" + mMapView.getMapOrientation());
+                df.format(mapCenter.getLongitude())
+                + ",zoom=" + mMapView.getZoomLevelDouble() + ",angle=" + mMapView.getMapOrientation());
 
     }
+
     @Override
     public void onClick(View v) {
         switch (v.getId()) {

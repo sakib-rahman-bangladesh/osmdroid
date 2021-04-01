@@ -5,6 +5,10 @@ buildscript {
         jcenter()
         mavenCentral()
         mavenLocal()
+        maven {
+            url 'https://maven.google.com/'
+            name 'Google'
+        }
     }
     dependencies {
             classpath "com.android.tools.build:gradle:${project.property('android-plugin.version')}"
@@ -36,7 +40,11 @@ allprojects {
         mavenCentral()
         mavenLocal()
         maven { url "https://oss.sonatype.org/content/repositories/snapshots" }
-        maven { url "http://repo.maven.apache.org/maven2" }
+        maven { url "https://repo.maven.apache.org/maven2" }
+        maven {
+            url 'https://maven.google.com/'
+            name 'Google'
+        }
     }
 
     tasks.withType(JavaCompile) {
@@ -44,7 +52,7 @@ allprojects {
     }
 
     if (project.hasProperty('profile') && project.profile.split(',').contains("ci")) {
-        apply from: "https://raw.githubusercontent.com/gradle-fury/gradle-fury/v1.1.3/gradle/quality.gradle"
+		apply from: "${rootDir}/gradle/quality.gradle"
     }
 
 }

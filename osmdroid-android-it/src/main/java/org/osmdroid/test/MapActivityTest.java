@@ -7,14 +7,12 @@
  */
 package org.osmdroid.test;
 
-import org.osmdroid.MainActivity;
-import org.osmdroid.StarterMapActivity;
-import org.osmdroid.tileprovider.util.Counters;
-import org.osmdroid.views.MapView;
-
 import android.test.ActivityInstrumentationTestCase2;
 
 import junit.framework.Assert;
+
+import org.osmdroid.StarterMapActivity;
+import org.osmdroid.tileprovider.util.Counters;
 
 public class MapActivityTest extends ActivityInstrumentationTestCase2<StarterMapActivity> {
 
@@ -31,7 +29,7 @@ public class MapActivityTest extends ActivityInstrumentationTestCase2<StarterMap
         } catch (InterruptedException e) {
         }
         Counters.printToLogcat();
-        if (Counters.countOOM > 0 || Counters.fileCacheOOM > 0){
+        if (Counters.countOOM > 0 || Counters.fileCacheOOM > 0) {
             Assert.fail("OOM Detected, aborting!");
         }
         activity.finish();

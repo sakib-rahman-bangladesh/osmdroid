@@ -8,10 +8,17 @@ import java.util.List;
  * https://github.com/osmdroid/osmdroid/issues/177
  *
  * @author Alex O'Ree
- *         1/10/16.
+ * 1/10/16.
  * @since 6.0.0
  */
 public class WMSEndpoint {
+    private String name, description, title;
+    private String wmsVersion = "1.1.0";
+    //capability/getmap/HTTP/Get/OnlineResource
+    private String baseurl;
+    private List<WMSLayer> layers = new ArrayList<>();
+
+
     public String getName() {
         return name;
     }
@@ -36,11 +43,6 @@ public class WMSEndpoint {
         this.title = title;
     }
 
-    private String name, description,title;
-    private String wmsVersion = "1.1.0";
-    //capability/getmap/HTTP/Get/OnlineResource
-    private String baseurl;
-    private List<WMSLayer> layers = new ArrayList<>();
 
     public String getWmsVersion() {
         return wmsVersion;

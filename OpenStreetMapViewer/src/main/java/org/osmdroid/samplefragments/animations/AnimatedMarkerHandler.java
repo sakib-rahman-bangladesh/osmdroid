@@ -5,6 +5,7 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Button;
+import android.widget.LinearLayout;
 
 import org.osmdroid.R;
 import org.osmdroid.samplefragments.BaseSampleFragment;
@@ -33,18 +34,17 @@ public class AnimatedMarkerHandler extends BaseSampleFragment implements View.On
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
 
 
-        View root = inflater.inflate(R.layout.sample_cachemgr, container,false);
-        setHasOptionsMenu(false);//prevent tile source changes
-        mMapView = (MapView) root.findViewById(R.id.mapview);
-        btnCache = (Button) root.findViewById(R.id.btnCache);
+        View root = inflater.inflate(R.layout.sample_cachemgr, container, false);
+        mMapView = new MapView(getActivity());
+        ((LinearLayout) root.findViewById(R.id.mapview)).addView(mMapView);
+        btnCache = root.findViewById(R.id.btnCache);
         btnCache.setOnClickListener(this);
         btnCache.setText("Start/Stop Animation");
 
         marker = new Marker(mMapView);
         marker.setTitle("An animated marker");
-        marker.setPosition(new GeoPoint(0d,0d));
+        marker.setPosition(new GeoPoint(0d, 0d));
         mMapView.getOverlayManager().add(marker);
-
 
 
         return root;
@@ -64,11 +64,11 @@ public class AnimatedMarkerHandler extends BaseSampleFragment implements View.On
 
     @Override
     public void onClick(View v) {
-        switch (v.getId()){
+        switch (v.getId()) {
             case R.id.btnCache:
 
                 GeoPoint random = new GeoPoint((Math.random() * 180) - 90, (Math.random() * 360) - 180);
-                MarkerAnimation.animateMarkerToGB(mMapView,marker, random, new GeoPointInterpolator.Spherical());
+                MarkerAnimation.animateMarkerToGB(mMapView, marker, random, new GeoPointInterpolator.Spherical());
                 break;
         }
     }

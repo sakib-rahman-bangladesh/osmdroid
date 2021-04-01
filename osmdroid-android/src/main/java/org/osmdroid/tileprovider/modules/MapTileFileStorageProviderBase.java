@@ -1,85 +1,63 @@
 package org.osmdroid.tileprovider.modules;
 
-import org.osmdroid.tileprovider.IRegisterReceiver;
-
 import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
-import android.os.Environment;
-import android.util.Log;
-import org.osmdroid.api.IMapView;
+
+import org.osmdroid.tileprovider.IRegisterReceiver;
 
 public abstract class MapTileFileStorageProviderBase extends MapTileModuleProviderBase {
 
-	/** whether the sdcard is mounted read/write */
-	static private boolean mSdCardAvailable = true;
+    private final IRegisterReceiver mRegisterReceiver;
+    private MyBroadcastReceiver mBroadcastReceiver;
 
-	private final IRegisterReceiver mRegisterReceiver;
-	private MyBroadcastReceiver mBroadcastReceiver;
+    public MapTileFileStorageProviderBase(final IRegisterReceiver pRegisterReceiver,
+                                          final int pThreadPoolSize, final int pPendingQueueSize) {
+        super(pThreadPoolSize, pPendingQueueSize);
 
-	public MapTileFileStorageProviderBase(final IRegisterReceiver pRegisterReceiver,
-			final int pThreadPoolSize, final int pPendingQueueSize) {
-		super(pThreadPoolSize, pPendingQueueSize);
+        mRegisterReceiver = pRegisterReceiver;
+        mBroadcastReceiver = new MyBroadcastReceiver();
 
-		checkSdCard();
+        final IntentFilter mediaFilter = new IntentFilter();
+        mediaFilter.addAction(Intent.ACTION_MEDIA_MOUNTED);
+        mediaFilter.addAction(Intent.ACTION_MEDIA_UNMOUNTED);
+        mediaFilter.addDataScheme("file");
+        pRegisterReceiver.registerReceiver(mBroadcastReceiver, mediaFilter);
+    }
 
-		mRegisterReceiver = pRegisterReceiver;
-		mBroadcastReceiver = new MyBroadcastReceiver();
+    @Override
+    public void detach() {
+        if (mBroadcastReceiver != null) {
+            mRegisterReceiver.unregisterReceiver(mBroadcastReceiver);
+            mBroadcastReceiver = null;
+        }
+        super.detach();
+    }
 
-		final IntentFilter mediaFilter = new IntentFilter();
-		mediaFilter.addAction(Intent.ACTION_MEDIA_MOUNTED);
-		mediaFilter.addAction(Intent.ACTION_MEDIA_UNMOUNTED);
-		mediaFilter.addDataScheme("file");
-		pRegisterReceiver.registerReceiver(mBroadcastReceiver, mediaFilter);
-	}
+    protected void onMediaMounted() {
+        // Do nothing by default. Override to handle.
+    }
 
-	private void checkSdCard() {
-		final String state = Environment.getExternalStorageState();
-          Log.i(IMapView.LOGTAG,"sdcard state: " + state);
-		mSdCardAvailable = Environment.MEDIA_MOUNTED.equals(state);
-	}
+    protected void onMediaUnmounted() {
+        // Do nothing by default. Override to handle.
+    }
 
-	/** whether the sdcard is mounted read/write */
-	public static boolean isSdCardAvailable() {
-		return mSdCardAvailable;
-	}
+    /**
+     * This broadcast receiver will recheck the sd card when the mount/unmount messages happen
+     */
+    private class MyBroadcastReceiver extends BroadcastReceiver {
 
-	@Override
-	public void detach() {
-		if (mBroadcastReceiver != null) {
-			mRegisterReceiver.unregisterReceiver(mBroadcastReceiver);
-			mBroadcastReceiver = null;
-		}
-		super.detach();
-	}
+        @Override
+        public void onReceive(final Context aContext, final Intent aIntent) {
 
-	protected void onMediaMounted() {
-		// Do nothing by default. Override to handle.
-	}
+            final String action = aIntent.getAction();
 
-	protected void onMediaUnmounted() {
-		// Do nothing by default. Override to handle.
-	}
-
-	/**
-	 * This broadcast receiver will recheck the sd card when the mount/unmount messages happen
-	 *
-	 */
-	private class MyBroadcastReceiver extends BroadcastReceiver {
-
-		@Override
-		public void onReceive(final Context aContext, final Intent aIntent) {
-
-			final String action = aIntent.getAction();
-
-			checkSdCard();
-
-			if (Intent.ACTION_MEDIA_MOUNTED.equals(action)) {
-				onMediaMounted();
-			} else if (Intent.ACTION_MEDIA_UNMOUNTED.equals(action)) {
-				onMediaUnmounted();
-			}
-		}
-	}
+            if (Intent.ACTION_MEDIA_MOUNTED.equals(action)) {
+                onMediaMounted();
+            } else if (Intent.ACTION_MEDIA_UNMOUNTED.equals(action)) {
+                onMediaUnmounted();
+            }
+        }
+    }
 }

@@ -6,29 +6,32 @@ package org.osmdroid.api;
  * and is implemented by the osmdroid {@link org.osmdroid.views.MapView} class.
  *
  * @author Neil Boyd
- *
  */
 public interface IMapView {
-     public static String LOGTAG="OsmDroid";
-	IMapController getController();
-	IProjection getProjection();
-	@Deprecated
-	int getZoomLevel();
-	/**
-	 * @since 6.0
-	 */
-	double getZoomLevelDouble();
-	double getMaxZoomLevel();
-     @Deprecated
-	int getLatitudeSpan();
-     @Deprecated
-	int getLongitudeSpan();
-	double getLatitudeSpanDouble();
-	double getLongitudeSpanDouble();
-	IGeoPoint getMapCenter();
+    public final static String LOGTAG = "OsmDroid";
 
-	// some methods from View
-	// (well, just one for now)
-	void setBackgroundColor(int color);
+    IMapController getController();
+
+    IProjection getProjection();
+
+    @Deprecated
+    int getZoomLevel();
+
+    /**
+     * @since 6.0
+     */
+    double getZoomLevelDouble();
+
+    double getMaxZoomLevel();
+
+    double getLatitudeSpanDouble();
+
+    double getLongitudeSpanDouble();
+
+    IGeoPoint getMapCenter();
+
+    // some methods from View
+    // (well, just one for now)
+    void setBackgroundColor(int color);
 
 }
